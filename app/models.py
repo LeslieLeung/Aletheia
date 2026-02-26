@@ -23,6 +23,8 @@ ID2LABEL = ["human", "ai"]
 
 WINDOW_SIZE = 512
 STRIDE = 256
+EARLY_STOP_THRESHOLD = 0.95
+EARLY_STOP_MIN_CHUNKS = 3
 
 
 @dataclass
@@ -69,12 +71,13 @@ class ModelManager:
         text: str,
         model_id: str,
         strategy: Strategy = Strategy.TRUNCATE,
+        early_stop: bool = False,
     ) -> tuple[str, float, int]:
         """Return ``(label, score, num_chunks)``."""
         entry = self.load(model_id)
         if strategy == Strategy.TRUNCATE:
             return self._predict_truncate(text, entry)
-        return self._predict_sliding(text, entry, strategy)
+        return self._predict_sliding(text, entry, strategy, early_stop)
 
     @staticmethod
     def _predict_truncate(
@@ -91,7 +94,10 @@ class ModelManager:
 
     @staticmethod
     def _predict_sliding(
-        text: str, entry: _CachedModel, strategy: Strategy
+        text: str,
+        entry: _CachedModel,
+        strategy: Strategy,
+        early_stop: bool = False,
     ) -> tuple[str, float, int]:
         encoding = entry.tokenizer(
             text, return_tensors="pt", truncation=False
@@ -120,6 +126,15 @@ class ModelManager:
             all_scores.append(scores)
             if end == total_len:
                 break
+            if early_stop and len(all_scores) >= EARLY_STOP_MIN_CHUNKS:
+                avg_so_far = np.mean(all_scores, axis=0)
+                if float(avg_so_far.max()) > EARLY_STOP_THRESHOLD:
+                    logger.info(
+                        "Early stop after %d chunks (confidence %.3f)",
+                        len(all_scores),
+                        float(avg_so_far.max()),
+                    )
+                    break
             start += STRIDE
 
         num_chunks = len(all_scores)
@@ -128,6 +143,12 @@ class ModelManager:
             avg = np.mean(all_scores, axis=0)
             label = ID2LABEL[int(avg.argmax())]
             return label, float(avg.max()), num_chunks
+
+        if strategy == Strategy.SLIDING_WEIGHTED_AVG:
+            weights = np.array([float(s.max()) for s in all_scores])
+            weighted = np.average(all_scores, axis=0, weights=weights)
+            label = ID2LABEL[int(weighted.argmax())]
+            return label, float(weighted.max()), num_chunks
 
         # SLIDING_VOTE
         votes = [ID2LABEL[int(s.argmax())] for s in all_scores]

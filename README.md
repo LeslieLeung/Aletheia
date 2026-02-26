@@ -42,13 +42,17 @@ Detect whether text is human-written or AI-generated.
 | `text`     | string | yes      |              | Text to detect                                                              |
 | `lang`     | string | no       | auto-detect  | `"zh"` for Chinese model, anything else for English                         |
 | `model_id` | string | no       | (by lang)    | HuggingFace model ID; overrides `lang`                                      |
-| `strategy` | string | no       | `"truncate"` | `"truncate"`, `"sliding_avg"`, or `"sliding_vote"` for long text handling   |
+| `strategy`   | string | no       | `"truncate"` | `"truncate"`, `"sliding_avg"`, `"sliding_weighted_avg"`, or `"sliding_vote"` |
+| `early_stop` | bool   | no       | `false`      | Stop early when confidence is high enough (sliding strategies only)           |
 
 **Strategies:**
 
 - `truncate` – Truncate to 512 tokens. Fast, single forward pass.
 - `sliding_avg` – Sliding window (512 tokens, stride 256). Average softmax scores across windows.
+- `sliding_weighted_avg` – Sliding window. Confidence-weighted average: chunks with higher confidence contribute more.
 - `sliding_vote` – Sliding window. Majority vote on predicted label across windows.
+
+> **Note:** For most use cases, `truncate` is sufficient. For long texts where you want higher accuracy, use `sliding_weighted_avg` with `early_stop` enabled — it gives better results than plain averaging by weighting high-confidence chunks more heavily, and early stopping avoids unnecessary computation when the result is already clear.
 
 **Example:**
 

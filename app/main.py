@@ -41,7 +41,9 @@ async def health() -> dict[str, str]:
 async def detect(req: DetectRequest) -> DetectResponse:
     lang = req.lang if req.lang else detect_language(req.text)
     model_id = manager.resolve_model_id(lang, req.model_id)
-    label, score, num_chunks = manager.predict(req.text, model_id, req.strategy)
+    label, score, num_chunks = manager.predict(
+        req.text, model_id, req.strategy, req.early_stop
+    )
     return DetectResponse(
         label=label,
         score=score,

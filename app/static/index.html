@@ -17,6 +17,9 @@ textarea:focus{outline:none;border-color:#4f46e5;box-shadow:0 0 0 3px rgba(79,70
 .field label{font-size:.8rem;font-weight:600;color:#555}
 .field select,.field input{padding:.5rem .6rem;border:1px solid #ccc;border-radius:6px;font-size:.9rem}
 .field select:focus,.field input:focus{outline:none;border-color:#4f46e5}
+.check-field{display:flex;align-items:center;gap:.5rem;margin-top:.75rem}
+.check-field input[type=checkbox]{width:18px;height:18px;accent-color:#4f46e5;cursor:pointer}
+.check-field label{font-size:.85rem;color:#555;cursor:pointer;user-select:none}
 button{margin-top:1rem;width:100%;padding:.7rem;background:#4f46e5;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;transition:background .15s}
 button:hover{background:#4338ca}
 button:disabled{opacity:.6;cursor:not-allowed}
@@ -53,6 +56,7 @@ button:disabled{opacity:.6;cursor:not-allowed}
       <select id="strategy">
         <option value="truncate">Truncate</option>
         <option value="sliding_avg">Sliding Avg</option>
+        <option value="sliding_weighted_avg">Weighted Avg</option>
         <option value="sliding_vote">Sliding Vote</option>
       </select>
     </div>
@@ -60,6 +64,11 @@ button:disabled{opacity:.6;cursor:not-allowed}
       <label for="model_id">Model ID (optional)</label>
       <input id="model_id" type="text" placeholder="e.g. yuchuantian/AIGC_detector_env3">
     </div>
+  </div>
+
+  <div class="check-field">
+    <input type="checkbox" id="early_stop" checked>
+    <label for="early_stop">Early stop (skip remaining chunks when confidence is high)</label>
   </div>
 
   <button id="btn" onclick="run()">Detect</button>
@@ -81,7 +90,7 @@ async function run(){
   btn.disabled=true;btn.textContent='Detecting…';
   document.getElementById('error').className='error';
   document.getElementById('result').className='result';
-  const body={text,strategy:document.getElementById('strategy').value};
+  const body={text,strategy:document.getElementById('strategy').value,early_stop:document.getElementById('early_stop').checked};
   const lang=document.getElementById('lang').value;
   if(lang)body.lang=lang;
   const mid=document.getElementById('model_id').value.trim();

@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 class Strategy(str, Enum):
     TRUNCATE = "truncate"
     SLIDING_AVG = "sliding_avg"
+    SLIDING_WEIGHTED_AVG = "sliding_weighted_avg"
     SLIDING_VOTE = "sliding_vote"
 
 
@@ -24,7 +25,11 @@ class DetectRequest(BaseModel):
     )
     strategy: Strategy = Field(
         Strategy.TRUNCATE,
-        description="Long text handling strategy: truncate, sliding_avg, or sliding_vote",
+        description="Long text handling strategy: truncate, sliding_avg, sliding_weighted_avg, or sliding_vote",
+    )
+    early_stop: bool = Field(
+        False,
+        description="Stop early when confidence is high enough (only for sliding strategies)",
     )
 
 
