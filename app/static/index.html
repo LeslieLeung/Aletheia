@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aletheia – AIGC Text Detector</title>
+<style>
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:#f5f5f5;color:#1a1a1a}
+.container{max-width:680px;margin:0 auto;padding:2rem 1rem}
+h1{font-size:1.5rem;margin-bottom:.25rem}
+p.sub{color:#666;margin-top:0;margin-bottom:1.5rem;font-size:.9rem}
+textarea{width:100%;min-height:160px;padding:.75rem;border:1px solid #ccc;border-radius:8px;font-size:1rem;resize:vertical;font-family:inherit}
+textarea:focus{outline:none;border-color:#4f46e5;box-shadow:0 0 0 3px rgba(79,70,229,.15)}
+.row{display:flex;gap:.75rem;margin-top:.75rem;flex-wrap:wrap}
+.field{display:flex;flex-direction:column;gap:.25rem;flex:1;min-width:140px}
+.field label{font-size:.8rem;font-weight:600;color:#555}
+.field select,.field input{padding:.5rem .6rem;border:1px solid #ccc;border-radius:6px;font-size:.9rem}
+.field select:focus,.field input:focus{outline:none;border-color:#4f46e5}
+button{margin-top:1rem;width:100%;padding:.7rem;background:#4f46e5;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;transition:background .15s}
+button:hover{background:#4338ca}
+button:disabled{opacity:.6;cursor:not-allowed}
+.result{margin-top:1.25rem;padding:1rem;border-radius:8px;background:#fff;border:1px solid #e5e5e5;display:none}
+.result.show{display:block}
+.result h2{margin:0 0 .75rem;font-size:1.1rem}
+.badge{display:inline-block;padding:.25rem .7rem;border-radius:999px;font-weight:700;font-size:.95rem;text-transform:uppercase}
+.badge.human{background:#dcfce7;color:#166534}
+.badge.ai{background:#fee2e2;color:#991b1b}
+.meta{margin-top:.75rem;font-size:.85rem;color:#555;line-height:1.7}
+.meta span{font-weight:600;color:#333}
+.error{margin-top:1rem;padding:.75rem;border-radius:8px;background:#fee2e2;color:#991b1b;display:none;font-size:.9rem}
+.error.show{display:block}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Aletheia</h1>
+  <p class="sub">AIGC Text Detector – paste text below to check if it was written by a human or AI.</p>
+
+  <textarea id="text" placeholder="Paste or type text here…"></textarea>
+
+  <div class="row">
+    <div class="field">
+      <label for="lang">Language</label>
+      <select id="lang">
+        <option value="">Auto-detect</option>
+        <option value="zh">Chinese</option>
+        <option value="en">English</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="strategy">Strategy</label>
+      <select id="strategy">
+        <option value="truncate">Truncate</option>
+        <option value="sliding_avg">Sliding Avg</option>
+        <option value="sliding_vote">Sliding Vote</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="model_id">Model ID (optional)</label>
+      <input id="model_id" type="text" placeholder="e.g. yuchuantian/AIGC_detector_env3">
+    </div>
+  </div>
+
+  <button id="btn" onclick="run()">Detect</button>
+
+  <div class="error" id="error"></div>
+
+  <div class="result" id="result">
+    <h2>Result</h2>
+    <div id="badge"></div>
+    <div class="meta" id="meta"></div>
+  </div>
+</div>
+
+<script>
+async function run(){
+  const btn=document.getElementById('btn');
+  const text=document.getElementById('text').value.trim();
+  if(!text)return;
+  btn.disabled=true;btn.textContent='Detecting…';
+  document.getElementById('error').className='error';
+  document.getElementById('result').className='result';
+  const body={text,strategy:document.getElementById('strategy').value};
+  const lang=document.getElementById('lang').value;
+  if(lang)body.lang=lang;
+  const mid=document.getElementById('model_id').value.trim();
+  if(mid)body.model_id=mid;
+  try{
+    const r=await fetch('/detect',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!r.ok){const e=await r.json();throw new Error(e.detail||r.statusText);}
+    const d=await r.json();
+    document.getElementById('badge').innerHTML=`<span class="badge ${d.label}">${d.label}</span>`;
+    document.getElementById('meta').innerHTML=
+      `Score: <span>${(d.score*100).toFixed(1)}%</span> &nbsp;|&nbsp; `+
+      `Language: <span>${d.detected_lang}</span> &nbsp;|&nbsp; `+
+      `Model: <span>${d.model_id}</span> &nbsp;|&nbsp; `+
+      `Chunks: <span>${d.num_chunks}</span>`;
+    document.getElementById('result').className='result show';
+  }catch(e){
+    const el=document.getElementById('error');
+    el.textContent=e.message;el.className='error show';
+  }finally{btn.disabled=false;btn.textContent='Detect';}
+}
+document.getElementById('text').addEventListener('keydown',e=>{if(e.ctrlKey&&e.key==='Enter')run();});
+</script>
+</body>
+</html>

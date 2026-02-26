@@ -1,0 +1,136 @@
+from __future__ import annotations
+
+import logging
+from collections import Counter
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
+
+import numpy as np
+import torch
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
+
+from app.schemas import Strategy
+
+if TYPE_CHECKING:
+    from transformers import PreTrainedModel, PreTrainedTokenizerBase
+
+logger = logging.getLogger(__name__)
+
+DEFAULT_EN_MODEL = "yuchuantian/AIGC_detector_env3"
+DEFAULT_ZH_MODEL = "yuchuantian/AIGC_detector_zhv3"
+
+ID2LABEL = ["human", "ai"]
+
+WINDOW_SIZE = 512
+STRIDE = 256
+
+
+@dataclass
+class _CachedModel:
+    model: PreTrainedModel
+    tokenizer: PreTrainedTokenizerBase
+
+
+@dataclass
+class ModelManager:
+    """Loads, caches and runs inference with HuggingFace classification models."""
+
+    _cache: dict[str, _CachedModel] = field(default_factory=dict)
+
+    def load(self, model_id: str) -> _CachedModel:
+        if model_id in self._cache:
+            return self._cache[model_id]
+        logger.info("Loading model %s …", model_id)
+        tokenizer = AutoTokenizer.from_pretrained(model_id)
+        model = AutoModelForSequenceClassification.from_pretrained(model_id)
+        model.eval()
+        entry = _CachedModel(model=model, tokenizer=tokenizer)
+        self._cache[model_id] = entry
+        logger.info("Model %s loaded.", model_id)
+        return entry
+
+    def load_defaults(self) -> None:
+        self.load(DEFAULT_EN_MODEL)
+        self.load(DEFAULT_ZH_MODEL)
+
+    def resolve_model_id(self, lang: str, model_id: str | None) -> str:
+        if model_id is not None:
+            return model_id
+        if lang == "zh":
+            return DEFAULT_ZH_MODEL
+        return DEFAULT_EN_MODEL
+
+    # ------------------------------------------------------------------
+    # Prediction
+    # ------------------------------------------------------------------
+
+    def predict(
+        self,
+        text: str,
+        model_id: str,
+        strategy: Strategy = Strategy.TRUNCATE,
+    ) -> tuple[str, float, int]:
+        """Return ``(label, score, num_chunks)``."""
+        entry = self.load(model_id)
+        if strategy == Strategy.TRUNCATE:
+            return self._predict_truncate(text, entry)
+        return self._predict_sliding(text, entry, strategy)
+
+    @staticmethod
+    def _predict_truncate(
+        text: str, entry: _CachedModel
+    ) -> tuple[str, float, int]:
+        with torch.no_grad():
+            inputs = entry.tokenizer(
+                text, return_tensors="pt", max_length=WINDOW_SIZE, truncation=True
+            )
+            logits = entry.model(**inputs).logits[0]
+            scores = logits.softmax(0).numpy()
+        label = ID2LABEL[int(scores.argmax())]
+        return label, float(scores.max()), 1
+
+    @staticmethod
+    def _predict_sliding(
+        text: str, entry: _CachedModel, strategy: Strategy
+    ) -> tuple[str, float, int]:
+        encoding = entry.tokenizer(
+            text, return_tensors="pt", truncation=False
+        )
+        input_ids = encoding["input_ids"][0]
+        total_len = len(input_ids)
+
+        if total_len <= WINDOW_SIZE:
+            with torch.no_grad():
+                logits = entry.model(**encoding).logits[0]
+                scores = logits.softmax(0).numpy()
+            label = ID2LABEL[int(scores.argmax())]
+            return label, float(scores.max()), 1
+
+        all_scores: list[np.ndarray] = []
+        start = 0
+        while start < total_len:
+            end = min(start + WINDOW_SIZE, total_len)
+            chunk_ids = input_ids[start:end].unsqueeze(0)
+            attention_mask = torch.ones_like(chunk_ids)
+            with torch.no_grad():
+                logits = entry.model(
+                    input_ids=chunk_ids, attention_mask=attention_mask
+                ).logits[0]
+                scores = logits.softmax(0).numpy()
+            all_scores.append(scores)
+            if end == total_len:
+                break
+            start += STRIDE
+
+        num_chunks = len(all_scores)
+
+        if strategy == Strategy.SLIDING_AVG:
+            avg = np.mean(all_scores, axis=0)
+            label = ID2LABEL[int(avg.argmax())]
+            return label, float(avg.max()), num_chunks
+
+        # SLIDING_VOTE
+        votes = [ID2LABEL[int(s.argmax())] for s in all_scores]
+        counter = Counter(votes)
+        winner, count = counter.most_common(1)[0]
+        return winner, count / num_chunks, num_chunks

@@ -1,0 +1,10 @@
+services:
+  aletheia:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - hf-cache:/data/huggingface
+
+volumes:
+  hf-cache:
