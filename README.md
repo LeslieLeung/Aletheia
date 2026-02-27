@@ -1,5 +1,7 @@
 # Aletheia – AIGC Text Detector API
 
+[中文文档](README_zh.md)
+
 A FastAPI service for detecting AI-generated text, based on [AIGC_text_detector](https://github.com/YuchuanTian/AIGC_text_detector).
 
 ## Quick Start (Docker)
@@ -10,6 +12,23 @@ docker compose -f docker-compose.yml up
 ```
 
 The API will be available at `http://localhost:8000`.
+
+## Chrome Extension
+
+A Chrome extension is available that automatically detects AI-generated text on article pages you visit.
+
+### Install
+
+1. Go to the [Releases](https://github.com/LeslieLeung/Aletheia/releases) page and download the latest `aletheia-extension-*.zip`.
+2. Unzip the file.
+3. Open `chrome://extensions` in Chrome, enable **Developer mode**.
+4. Click **Load unpacked** and select the unzipped folder.
+
+### Configure
+
+Click the extension icon to open the popup. Set the **API URL** to point to your running Aletheia instance (default: `http://localhost:8000`). For more options (detection strategy, domain whitelist/blacklist), go to the extension's **Settings** page.
+
+The extension will automatically detect article content on pages you visit and show a floating badge with the result.
 
 ## Local Development
 

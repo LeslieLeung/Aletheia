@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="header">
+    <h1>Aletheia</h1>
+    <label class="toggle">
+      <input type="checkbox" id="enabled">
+      <span class="slider"></span>
+    </label>
+  </div>
+  <p class="sub">AI Text Detector</p>
+
+  <div class="section">
+    <label for="apiUrl">API URL</label>
+    <input type="text" id="apiUrl" placeholder="http://localhost:8000">
+  </div>
+
+  <button id="detectBtn">Detect Now</button>
+
+  <div id="status" class="status"></div>
+
+  <div class="footer">
+    <a href="#" id="optionsLink">Settings</a>
+  </div>
+
+  <script src="../shared/constants.js"></script>
+  <script src="../shared/storage.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

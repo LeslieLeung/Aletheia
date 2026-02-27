@@ -1,0 +1,26 @@
+name: Package Chrome Extension
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  package-extension:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Package extension
+        run: |
+          cd extension
+          zip -r ../aletheia-extension-${{ github.ref_name }}.zip . \
+            -x ".*"
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: aletheia-extension-${{ github.ref_name }}.zip

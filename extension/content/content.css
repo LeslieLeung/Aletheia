@@ -1,0 +1,7 @@
+#aletheia-badge-host {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 2147483647;
+  font-family: system-ui, -apple-system, sans-serif;
+}
