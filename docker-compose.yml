@@ -3,8 +3,3 @@ services:
     image: ghcr.io/leslieleung/aletheia:latest
     ports:
       - "8000:8000"
-    volumes:
-      - hf-cache:/data/huggingface
-
-volumes:
-  hf-cache:
