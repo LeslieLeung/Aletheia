@@ -16,7 +16,7 @@ RUN python scripts/convert_models.py
 
 
 # ─── Stage 2: build venv (inference deps only, no torch) ─────────────────────
-FROM ghcr.io/astral-sh/uv:python3.14-bookworm-slim AS builder
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS builder
 
 WORKDIR /app
 
@@ -35,7 +35,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 
 # ─── Stage 3: final runtime image ────────────────────────────────────────────
-FROM python:3.14-slim-bookworm
+FROM python:3.12-slim-bookworm
 
 WORKDIR /app
 

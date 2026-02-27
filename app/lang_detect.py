@@ -1,17 +1,18 @@
-from langdetect import detect
-from langdetect.lang_detect_exception import LangDetectException
+from lingua import Language, LanguageDetectorBuilder
+
+_detector = LanguageDetectorBuilder.from_all_languages().build()
 
 
 def detect_language(text: str) -> str:
     """Return a language code for the given text.
 
-    Returns ``"zh"`` for Chinese text (zh-cn, zh-tw, etc.) and the raw
-    langdetect code for everything else (e.g. ``"en"``, ``"fr"``).
+    Returns ``"zh"`` for Chinese text and the ISO 639-1 code for everything
+    else (e.g. ``"en"``, ``"fr"``). Falls back to ``"en"`` when detection
+    is not reliable.
     """
-    try:
-        lang = detect(text)
-    except LangDetectException:
+    language = _detector.detect_language_of(text)
+    if language is None:
         return "en"
-    if lang.startswith("zh"):
+    if language == Language.CHINESE:
         return "zh"
-    return lang
+    return language.iso_code_639_1.name.lower()
