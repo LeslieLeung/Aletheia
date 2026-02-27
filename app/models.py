@@ -6,13 +6,14 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 import numpy as np
-import torch
-from transformers import AutoModelForSequenceClassification, AutoTokenizer
+from optimum.onnxruntime import ORTModelForSequenceClassification
+from transformers import AutoTokenizer
 
 from app.schemas import Strategy
 
 if TYPE_CHECKING:
-    from transformers import PreTrainedModel, PreTrainedTokenizerBase
+    from optimum.onnxruntime import ORTModelForSequenceClassification as OrtModel
+    from transformers import PreTrainedTokenizerBase
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +30,7 @@ EARLY_STOP_MIN_CHUNKS = 3
 
 @dataclass
 class _CachedModel:
-    model: PreTrainedModel
+    model: OrtModel
     tokenizer: PreTrainedTokenizerBase
 
 
@@ -44,8 +45,7 @@ class ModelManager:
             return self._cache[model_id]
         logger.info("Loading model %s …", model_id)
         tokenizer = AutoTokenizer.from_pretrained(model_id)
-        model = AutoModelForSequenceClassification.from_pretrained(model_id)
-        model.eval()
+        model = ORTModelForSequenceClassification.from_pretrained(model_id, export=True)
         entry = _CachedModel(model=model, tokenizer=tokenizer)
         self._cache[model_id] = entry
         logger.info("Model %s loaded.", model_id)
@@ -80,15 +80,17 @@ class ModelManager:
         return self._predict_sliding(text, entry, strategy, early_stop)
 
     @staticmethod
-    def _predict_truncate(
-        text: str, entry: _CachedModel
-    ) -> tuple[str, float, int]:
-        with torch.no_grad():
-            inputs = entry.tokenizer(
-                text, return_tensors="pt", max_length=WINDOW_SIZE, truncation=True
-            )
-            logits = entry.model(**inputs).logits[0]
-            scores = logits.softmax(0).numpy()
+    def _softmax(x: np.ndarray) -> np.ndarray:
+        e = np.exp(x - x.max())
+        return e / e.sum()
+
+    @staticmethod
+    def _predict_truncate(text: str, entry: _CachedModel) -> tuple[str, float, int]:
+        inputs = entry.tokenizer(
+            text, return_tensors="np", max_length=WINDOW_SIZE, truncation=True
+        )
+        logits = entry.model(**inputs).logits[0]
+        scores = ModelManager._softmax(logits)
         label = ID2LABEL[int(scores.argmax())]
         return label, float(scores.max()), 1
 
@@ -99,16 +101,13 @@ class ModelManager:
         strategy: Strategy,
         early_stop: bool = False,
     ) -> tuple[str, float, int]:
-        encoding = entry.tokenizer(
-            text, return_tensors="pt", truncation=False
-        )
+        encoding = entry.tokenizer(text, return_tensors="np", truncation=False)
         input_ids = encoding["input_ids"][0]
         total_len = len(input_ids)
 
         if total_len <= WINDOW_SIZE:
-            with torch.no_grad():
-                logits = entry.model(**encoding).logits[0]
-                scores = logits.softmax(0).numpy()
+            logits = entry.model(**encoding).logits[0]
+            scores = ModelManager._softmax(logits)
             label = ID2LABEL[int(scores.argmax())]
             return label, float(scores.max()), 1
 
@@ -116,13 +115,12 @@ class ModelManager:
         start = 0
         while start < total_len:
             end = min(start + WINDOW_SIZE, total_len)
-            chunk_ids = input_ids[start:end].unsqueeze(0)
-            attention_mask = torch.ones_like(chunk_ids)
-            with torch.no_grad():
-                logits = entry.model(
-                    input_ids=chunk_ids, attention_mask=attention_mask
-                ).logits[0]
-                scores = logits.softmax(0).numpy()
+            chunk_ids = input_ids[start:end][np.newaxis, :]
+            attention_mask = np.ones_like(chunk_ids)
+            logits = entry.model(
+                input_ids=chunk_ids, attention_mask=attention_mask
+            ).logits[0]
+            scores = ModelManager._softmax(logits)
             all_scores.append(scores)
             if end == total_len:
                 break
