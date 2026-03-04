@@ -20,7 +20,8 @@ async function handleDetect(text) {
     var body = {
       text: text,
       strategy: settings.strategy,
-      early_stop: settings.earlyStop
+      early_stop: settings.earlyStop,
+      detector: settings.detector
     };
 
     var response = await fetch(settings.apiUrl + "/detect", {

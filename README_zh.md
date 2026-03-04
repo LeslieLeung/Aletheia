@@ -1,6 +1,6 @@
 # Aletheia – AIGC 文本检测 API
 
-基于 [AIGC_text_detector](https://github.com/YuchuanTian/AIGC_text_detector) 的 FastAPI 服务，用于检测文本是否由 AI 生成。
+基于 [AIGC_text_detector](https://github.com/YuchuanTian/AIGC_text_detector) 和 [DivEye](https://github.com/IBM/diveye) 的 FastAPI 服务，用于检测文本是否由 AI 生成。
 
 ## 快速开始 (Docker)
 
@@ -103,3 +103,18 @@ curl -X POST http://localhost:8000/detect \
 | 中文   | `yuchuantian/AIGC_detector_zhv3`    |
 
 可通过请求中的 `model_id` 字段使用任意 HuggingFace `*ForSequenceClassification` 模型。
+
+## 检测方法
+
+### AIGC Text Detector
+
+基于 Transformer 的序列分类器，专门针对 AI 文本检测微调。
+来源：[YuchuanTian/AIGC_text_detector](https://github.com/YuchuanTian/AIGC_text_detector)
+
+### DivEye
+
+DivEye 通过基于 **surprisal（惊异度）** 的统计特征检测 AI 生成文本——该特征衡量文本各位置的不可预测性变化程度。人类写作在词汇和结构上的不可预测性波动明显大于大语言模型输出。这些特征输入 XGBoost 分类器，具备良好的可解释性，并对改写攻击有较强的鲁棒性。
+
+> Advik Raj Basani, Pin-Yu Chen. *Diversity Boosts AI-Generated Text Detection.* TMLR 2026.
+
+来源：[IBM/diveye](https://github.com/IBM/diveye)

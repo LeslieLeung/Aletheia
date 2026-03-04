@@ -11,3 +11,13 @@ wheels/
 
 # Type checker cache
 .mypy_cache/
+
+# Data files - do not commit
+data/
+
+# Downloaded / converted models - fetched at Docker build time
+# models/diveye/ is intentionally NOT ignored (pre-trained model is committed)
+models/openai-community/
+
+.claude
+.cursor

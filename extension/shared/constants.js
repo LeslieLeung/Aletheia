@@ -4,6 +4,7 @@ ALETHEIA.DEFAULTS = Object.freeze({
   apiUrl: "http://localhost:8000",
   strategy: "sliding_weighted_avg",
   earlyStop: true,
+  detector: "onnx_classifier",
   whitelist: [],
   blacklist: [
     "google.com",

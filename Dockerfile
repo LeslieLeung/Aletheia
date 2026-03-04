@@ -1,7 +1,7 @@
 # ─── Stage 1: convert ────────────────────────────────────────────────────────
 # Downloads HF models and exports them to ONNX. Uses CPU-only torch to keep the
 # layer small; this stage is never included in the final image.
-FROM python:3.14-slim-bookworm AS converter
+FROM python:3.12-slim-bookworm AS converter
 
 WORKDIR /app
 
@@ -13,6 +13,9 @@ COPY scripts/convert_models.py scripts/convert_models.py
 ENV MODELS_DIR=/app/models
 
 RUN python scripts/convert_models.py
+
+# Copy pre-trained DivEye XGBoost model (train offline, place in models/diveye/)
+COPY models/diveye/ /app/models/diveye/
 
 
 # ─── Stage 2: build venv (inference deps only, no torch) ─────────────────────

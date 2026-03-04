@@ -2,7 +2,7 @@
 
 [中文文档](README_zh.md)
 
-A FastAPI service for detecting AI-generated text, based on [AIGC_text_detector](https://github.com/YuchuanTian/AIGC_text_detector).
+A FastAPI service for detecting AI-generated text, based on [AIGC_text_detector](https://github.com/YuchuanTian/AIGC_text_detector) and [DivEye](https://github.com/IBM/diveye).
 
 ## Quick Start (Docker)
 
@@ -105,3 +105,18 @@ Health check endpoint.
 | Chinese  | `yuchuantian/AIGC_detector_zhv3`    |
 
 You can use any HuggingFace `*ForSequenceClassification` model by passing `model_id` in the request.
+
+## Detection Methods
+
+### AIGC Text Detector
+
+Transformer-based sequence classifiers fine-tuned for AI-text detection.
+Source: [YuchuanTian/AIGC_text_detector](https://github.com/YuchuanTian/AIGC_text_detector).
+
+### DivEye
+
+DivEye detects AI-generated text using surprisal-based statistical features that capture how unpredictability varies throughout a text. Human writing exhibits greater variability in lexical and structural unpredictability compared to LLM outputs. These features feed an XGBoost classifier, making it interpretable and robust to paraphrasing attacks.
+
+> Advik Raj Basani, Pin-Yu Chen. *Diversity Boosts AI-Generated Text Detection.* TMLR 2026.
+
+Source: [IBM/diveye](https://github.com/IBM/diveye)

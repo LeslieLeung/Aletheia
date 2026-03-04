@@ -1,6 +1,7 @@
 (function () {
   var enabledEl = document.getElementById("enabled");
   var apiUrlEl = document.getElementById("apiUrl");
+  var detectorEl = document.getElementById("detector");
   var detectBtn = document.getElementById("detectBtn");
   var statusEl = document.getElementById("status");
   var optionsLink = document.getElementById("optionsLink");
@@ -9,11 +10,17 @@
   ALETHEIA.storage.get().then(function (settings) {
     enabledEl.checked = settings.enabled;
     apiUrlEl.value = settings.apiUrl;
+    detectorEl.value = settings.detector;
   });
 
   // Save enabled toggle
   enabledEl.addEventListener("change", function () {
     ALETHEIA.storage.set({ enabled: enabledEl.checked });
+  });
+
+  // Save detector on change
+  detectorEl.addEventListener("change", function () {
+    ALETHEIA.storage.set({ detector: detectorEl.value });
   });
 
   // Save API URL on blur

@@ -7,7 +7,7 @@
 <style>
 *,*::before,*::after{box-sizing:border-box}
 body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:#f5f5f5;color:#1a1a1a}
-.container{max-width:680px;margin:0 auto;padding:2rem 1rem}
+.container{max-width:720px;margin:0 auto;padding:2rem 1rem}
 h1{font-size:1.5rem;margin-bottom:.25rem}
 p.sub{color:#666;margin-top:0;margin-bottom:1.5rem;font-size:.9rem}
 textarea{width:100%;min-height:160px;padding:.75rem;border:1px solid #ccc;border-radius:8px;font-size:1rem;resize:vertical;font-family:inherit}
@@ -17,20 +17,30 @@ textarea:focus{outline:none;border-color:#4f46e5;box-shadow:0 0 0 3px rgba(79,70
 .field label{font-size:.8rem;font-weight:600;color:#555}
 .field select,.field input{padding:.5rem .6rem;border:1px solid #ccc;border-radius:6px;font-size:.9rem}
 .field select:focus,.field input:focus{outline:none;border-color:#4f46e5}
+.detector-group{margin-top:.75rem;display:flex;flex-direction:column;gap:.25rem}
+.detector-group .group-label{font-size:.8rem;font-weight:600;color:#555}
+.detector-options{display:flex;gap:1rem;flex-wrap:wrap}
+.detector-option{display:flex;align-items:center;gap:.4rem;cursor:pointer}
+.detector-option input[type=checkbox]{width:16px;height:16px;accent-color:#4f46e5;cursor:pointer}
+.detector-option label{font-size:.9rem;color:#333;cursor:pointer;user-select:none}
 .check-field{display:flex;align-items:center;gap:.5rem;margin-top:.75rem}
 .check-field input[type=checkbox]{width:18px;height:18px;accent-color:#4f46e5;cursor:pointer}
 .check-field label{font-size:.85rem;color:#555;cursor:pointer;user-select:none}
 button{margin-top:1rem;width:100%;padding:.7rem;background:#4f46e5;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;transition:background .15s}
 button:hover{background:#4338ca}
 button:disabled{opacity:.6;cursor:not-allowed}
-.result{margin-top:1.25rem;padding:1rem;border-radius:8px;background:#fff;border:1px solid #e5e5e5;display:none}
-.result.show{display:block}
-.result h2{margin:0 0 .75rem;font-size:1.1rem}
+.results-grid{margin-top:1.25rem;display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.result-card{padding:1rem;border-radius:8px;background:#fff;border:1px solid #e5e5e5;display:none}
+.result-card.show{display:block}
+.result-card.loading{opacity:.5}
+.card-title{font-size:.75rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.6rem}
 .badge{display:inline-block;padding:.25rem .7rem;border-radius:999px;font-weight:700;font-size:.95rem;text-transform:uppercase}
 .badge.human{background:#dcfce7;color:#166534}
 .badge.ai{background:#fee2e2;color:#991b1b}
-.meta{margin-top:.75rem;font-size:.85rem;color:#555;line-height:1.7}
-.meta span{font-weight:600;color:#333}
+.meta{margin-top:.65rem;font-size:.82rem;color:#555;line-height:1.8;display:grid;grid-template-columns:max-content 1fr;gap:0 .5rem}
+.meta .k{color:#888}
+.meta .v{font-weight:600;color:#333}
+.card-error{font-size:.85rem;color:#991b1b;margin-top:.5rem}
 .error{margin-top:1rem;padding:.75rem;border-radius:8px;background:#fee2e2;color:#991b1b;display:none;font-size:.9rem}
 .error.show{display:block}
 </style>
@@ -66,6 +76,20 @@ button:disabled{opacity:.6;cursor:not-allowed}
     </div>
   </div>
 
+  <div class="detector-group">
+    <div class="group-label">Detectors</div>
+    <div class="detector-options">
+      <div class="detector-option">
+        <input type="checkbox" id="det-onnx" value="onnx_classifier" checked>
+        <label for="det-onnx">ONNX Classifier</label>
+      </div>
+      <div class="detector-option">
+        <input type="checkbox" id="det-diveye" value="diveye">
+        <label for="det-diveye">DivEye</label>
+      </div>
+    </div>
+  </div>
+
   <div class="check-field">
     <input type="checkbox" id="early_stop" checked>
     <label for="early_stop">Early stop (skip remaining chunks when confidence is high)</label>
@@ -75,43 +99,88 @@ button:disabled{opacity:.6;cursor:not-allowed}
 
   <div class="error" id="error"></div>
 
-  <div class="result" id="result">
-    <h2>Result</h2>
-    <div id="badge"></div>
-    <div class="meta" id="meta"></div>
-  </div>
+  <div class="results-grid" id="results-grid"></div>
 </div>
 
 <script>
-async function run(){
-  const btn=document.getElementById('btn');
-  const text=document.getElementById('text').value.trim();
-  if(!text)return;
-  btn.disabled=true;btn.textContent='Detecting…';
-  document.getElementById('error').className='error';
-  document.getElementById('result').className='result';
-  const body={text,strategy:document.getElementById('strategy').value,early_stop:document.getElementById('early_stop').checked};
-  const lang=document.getElementById('lang').value;
-  if(lang)body.lang=lang;
-  const mid=document.getElementById('model_id').value.trim();
-  if(mid)body.model_id=mid;
-  try{
-    const r=await fetch('/detect',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    if(!r.ok){const e=await r.json();throw new Error(e.detail||r.statusText);}
-    const d=await r.json();
-    document.getElementById('badge').innerHTML=`<span class="badge ${d.label}">${d.label}</span>`;
-    document.getElementById('meta').innerHTML=
-      `Score: <span>${(d.score*100).toFixed(1)}%</span> &nbsp;|&nbsp; `+
-      `Language: <span>${d.detected_lang}</span> &nbsp;|&nbsp; `+
-      `Model: <span>${d.model_id}</span> &nbsp;|&nbsp; `+
-      `Chunks: <span>${d.num_chunks}</span>`;
-    document.getElementById('result').className='result show';
-  }catch(e){
-    const el=document.getElementById('error');
-    el.textContent=e.message;el.className='error show';
-  }finally{btn.disabled=false;btn.textContent='Detect';}
+const DETECTOR_LABELS = {onnx_classifier: 'ONNX Classifier', diveye: 'DivEye'};
+
+async function run() {
+  const btn = document.getElementById('btn');
+  const text = document.getElementById('text').value.trim();
+  if (!text) return;
+
+  const detectors = [...document.querySelectorAll('.detector-options input[type=checkbox]:checked')].map(el => el.value);
+  if (!detectors.length) {
+    const err = document.getElementById('error');
+    err.textContent = 'Select at least one detector.';
+    err.className = 'error show';
+    return;
+  }
+
+  btn.disabled = true; btn.textContent = 'Detecting…';
+  document.getElementById('error').className = 'error';
+
+  const baseBody = {
+    text,
+    strategy: document.getElementById('strategy').value,
+    early_stop: document.getElementById('early_stop').checked,
+  };
+  const lang = document.getElementById('lang').value;
+  if (lang) baseBody.lang = lang;
+  const mid = document.getElementById('model_id').value.trim();
+  if (mid) baseBody.model_id = mid;
+
+  // Build result cards (one per detector) before firing requests
+  const grid = document.getElementById('results-grid');
+  grid.innerHTML = '';
+  const cards = {};
+  for (const det of detectors) {
+    const card = document.createElement('div');
+    card.className = 'result-card show loading';
+    card.innerHTML = `<div class="card-title">${DETECTOR_LABELS[det] || det}</div><div class="card-body">Detecting…</div>`;
+    grid.appendChild(card);
+    cards[det] = card;
+  }
+
+  // Fire all requests in parallel
+  const requests = detectors.map(det =>
+    fetch('/detect', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({...baseBody, detector: det}),
+    })
+    .then(r => r.ok ? r.json() : r.json().then(e => Promise.reject(new Error(e.detail || r.statusText))))
+  );
+
+  const results = await Promise.allSettled(requests);
+
+  results.forEach((res, i) => {
+    const det = detectors[i];
+    const card = cards[det];
+    card.classList.remove('loading');
+    if (res.status === 'fulfilled') {
+      const d = res.value;
+      card.innerHTML =
+        `<div class="card-title">${DETECTOR_LABELS[det] || det}</div>`+
+        `<div><span class="badge ${d.label}">${d.label}</span></div>`+
+        `<div class="meta">`+
+          `<span class="k">Score</span><span class="v">${(d.score*100).toFixed(1)}%</span>`+
+          `<span class="k">Language</span><span class="v">${d.detected_lang}</span>`+
+          `<span class="k">Model</span><span class="v">${d.model_id}</span>`+
+          `<span class="k">Chunks</span><span class="v">${d.num_chunks}</span>`+
+        `</div>`;
+    } else {
+      card.innerHTML =
+        `<div class="card-title">${DETECTOR_LABELS[det] || det}</div>`+
+        `<div class="card-error">${res.reason.message}</div>`;
+    }
+  });
+
+  btn.disabled = false; btn.textContent = 'Detect';
 }
-document.getElementById('text').addEventListener('keydown',e=>{if(e.ctrlKey&&e.key==='Enter')run();});
+
+document.getElementById('text').addEventListener('keydown', e => { if (e.ctrlKey && e.key === 'Enter') run(); });
 </script>
 </body>
 </html>

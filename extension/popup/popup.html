@@ -19,6 +19,14 @@
     <input type="text" id="apiUrl" placeholder="http://localhost:8000">
   </div>
 
+  <div class="section">
+    <label for="detector">Detector</label>
+    <select id="detector">
+      <option value="onnx_classifier">ONNX Classifier</option>
+      <option value="diveye">DivEye</option>
+    </select>
+  </div>
+
   <button id="detectBtn">Detect Now</button>
 
   <div id="status" class="status"></div>

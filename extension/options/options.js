@@ -2,6 +2,7 @@
   var apiUrlEl = document.getElementById("apiUrl");
   var testBtn = document.getElementById("testBtn");
   var testStatus = document.getElementById("testStatus");
+  var detectorEl = document.getElementById("detector");
   var strategyEl = document.getElementById("strategy");
   var earlyStopEl = document.getElementById("earlyStop");
   var minTextLengthEl = document.getElementById("minTextLength");
@@ -14,6 +15,7 @@
   // Load current settings
   ALETHEIA.storage.get().then(function (s) {
     apiUrlEl.value = s.apiUrl;
+    detectorEl.value = s.detector;
     strategyEl.value = s.strategy;
     earlyStopEl.checked = s.earlyStop;
     minTextLengthEl.value = s.minTextLength;
@@ -70,6 +72,7 @@
   saveBtn.addEventListener("click", function () {
     var data = {
       apiUrl: apiUrlEl.value.trim() || ALETHEIA.DEFAULTS.apiUrl,
+      detector: detectorEl.value,
       strategy: strategyEl.value,
       earlyStop: earlyStopEl.checked,
       minTextLength: parseInt(minTextLengthEl.value, 10) || ALETHEIA.DEFAULTS.minTextLength,
@@ -92,6 +95,7 @@
 
     var d = ALETHEIA.DEFAULTS;
     apiUrlEl.value = d.apiUrl;
+    detectorEl.value = d.detector;
     strategyEl.value = d.strategy;
     earlyStopEl.checked = d.earlyStop;
     minTextLengthEl.value = d.minTextLength;
@@ -100,6 +104,7 @@
 
     ALETHEIA.storage.set({
       apiUrl: d.apiUrl,
+      detector: d.detector,
       strategy: d.strategy,
       earlyStop: d.earlyStop,
       minTextLength: d.minTextLength,

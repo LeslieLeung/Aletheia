@@ -5,19 +5,24 @@ from typing import AsyncIterator
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 
+from app.detector import DetectorRegistry
+from app.detectors.diveye import DivEyeDetector
+from app.detectors.onnx_classifier import OnnxClassifierDetector
 from app.lang_detect import detect_language
-from app.models import ModelManager
 from app.schemas import DetectRequest, DetectResponse
 
 _STATIC_DIR = Path(__file__).resolve().parent / "static"
 
-manager = ModelManager()
+registry = DetectorRegistry()
+registry.register("onnx_classifier", OnnxClassifierDetector(), default=True)
+registry.register("diveye", DivEyeDetector())
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
-    manager.load_defaults()
+    registry.start_ttl_task()
     yield
+    registry.stop_ttl_task()
 
 
 app = FastAPI(
@@ -40,9 +45,12 @@ async def health() -> dict[str, str]:
 @app.post("/detect")
 async def detect(req: DetectRequest) -> DetectResponse:
     lang = req.lang if req.lang else detect_language(req.text)
-    model_id = manager.resolve_model_id(lang, req.model_id)
-    label, score, num_chunks = manager.predict(
-        req.text, model_id, req.strategy, req.early_stop
+    detector_name, detector = registry.get(
+        req.detector.value if req.detector else None
+    )
+    model_id = detector.resolve_model_id(lang, req.model_id)
+    detector_key, label, score, num_chunks = registry.predict(
+        detector_name, req.text, model_id, req.strategy, req.early_stop
     )
     return DetectResponse(
         label=label,
@@ -50,4 +58,5 @@ async def detect(req: DetectRequest) -> DetectResponse:
         model_id=model_id,
         detected_lang=lang,
         num_chunks=num_chunks,
+        detector=detector_key,
     )

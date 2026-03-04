@@ -11,6 +11,11 @@ class Strategy(str, Enum):
     SLIDING_VOTE = "sliding_vote"
 
 
+class DetectorType(str, Enum):
+    ONNX_CLASSIFIER = "onnx_classifier"
+    DIVEYE = "diveye"
+
+
 class DetectRequest(BaseModel):
     text: str = Field(..., min_length=1, description="Text to detect")
     lang: Optional[str] = Field(
@@ -31,6 +36,10 @@ class DetectRequest(BaseModel):
         False,
         description="Stop early when confidence is high enough (only for sliding strategies)",
     )
+    detector: Optional[DetectorType] = Field(
+        None,
+        description="Detector type: onnx_classifier or diveye. Defaults to onnx_classifier.",
+    )
 
 
 class DetectResponse(BaseModel):
@@ -39,3 +48,4 @@ class DetectResponse(BaseModel):
     model_id: str = Field(..., description="Model used for prediction")
     detected_lang: str = Field(..., description="Detected or specified language")
     num_chunks: int = Field(..., description="Number of chunks processed")
+    detector: str = Field(..., description="Detector type used")
