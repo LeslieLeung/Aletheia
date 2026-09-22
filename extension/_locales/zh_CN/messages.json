@@ -1,0 +1,199 @@
+{
+  "extName": {
+    "message": "Aletheia – AI 文本检测",
+    "description": "Extension name in the browser toolbar and chrome://extensions."
+  },
+  "extDesc": {
+    "message": "在文章页面自动检测 AI 生成的文本。",
+    "description": "Extension description in chrome://extensions."
+  },
+  "appSubtitle": {
+    "message": "AI 文本检测"
+  },
+  "apiUrl": {
+    "message": "API 地址"
+  },
+  "aiDetector": {
+    "message": "AI 检测器"
+  },
+  "contentType": {
+    "message": "内容类型"
+  },
+  "off": {
+    "message": "关闭"
+  },
+  "detectNow": {
+    "message": "立即检测"
+  },
+  "settings": {
+    "message": "设置"
+  },
+  "urlMustHttp": {
+    "message": "URL 必须使用 http 或 https"
+  },
+  "apiUrlSaved": {
+    "message": "API 地址已保存"
+  },
+  "invalidUrl": {
+    "message": "URL 格式无效"
+  },
+  "detecting": {
+    "message": "检测中…"
+  },
+  "sendingDetect": {
+    "message": "正在向当前标签页发送检测请求…"
+  },
+  "noActiveTab": {
+    "message": "未找到当前标签页"
+  },
+  "couldNotConnect": {
+    "message": "无法连接到页面。请先刷新页面后再试。"
+  },
+  "detectionTriggered": {
+    "message": "已开始检测，请在页面上查看结果。"
+  },
+  "unexpectedResponse": {
+    "message": "内容脚本返回了意外响应。"
+  },
+  "optionsTitle": {
+    "message": "Aletheia 设置"
+  },
+  "optionsSubtitle": {
+    "message": "配置 AI 文本检测扩展。"
+  },
+  "apiConnection": {
+    "message": "API 连接"
+  },
+  "testConnection": {
+    "message": "测试连接"
+  },
+  "detection": {
+    "message": "检测"
+  },
+  "contentTypeHint": {
+    "message": "将页面分类为原创、搬运或广告。关闭后不改变 AI 检测结果。"
+  },
+  "strategy": {
+    "message": "策略"
+  },
+  "strategyTruncate": {
+    "message": "截断"
+  },
+  "strategySlidingAvg": {
+    "message": "滑动平均"
+  },
+  "strategyWeightedAvg": {
+    "message": "加权平均"
+  },
+  "strategySlidingVote": {
+    "message": "滑动投票"
+  },
+  "earlyStop": {
+    "message": "提前停止（置信度足够高时跳过剩余片段）"
+  },
+  "minTextLength": {
+    "message": "最小文本长度（字符数）"
+  },
+  "domainFiltering": {
+    "message": "域名过滤"
+  },
+  "domainHint": {
+    "message": "白名单优先：白名单中的域名始终检测，黑名单中的域名始终跳过。每行一个域名。"
+  },
+  "whitelistLabel": {
+    "message": "白名单（始终检测这些域名）"
+  },
+  "blacklistLabel": {
+    "message": "黑名单（从不检测这些域名）"
+  },
+  "saveSettings": {
+    "message": "保存设置"
+  },
+  "resetDefaults": {
+    "message": "恢复默认"
+  },
+  "enterApiUrl": {
+    "message": "请输入 API 地址"
+  },
+  "testing": {
+    "message": "测试中…"
+  },
+  "connectedOk": {
+    "message": "连接成功！"
+  },
+  "unexpectedApiResponse": {
+    "message": "意外响应："
+  },
+  "connectionFailed": {
+    "message": "连接失败："
+  },
+  "settingsSaved": {
+    "message": "设置已保存！"
+  },
+  "confirmReset": {
+    "message": "将所有设置恢复为默认值？"
+  },
+  "settingsReset": {
+    "message": "已恢复为默认设置！"
+  },
+  "detectionResult": {
+    "message": "检测结果"
+  },
+  "confidence": {
+    "message": "置信度"
+  },
+  "content": {
+    "message": "内容"
+  },
+  "language": {
+    "message": "语言"
+  },
+  "model": {
+    "message": "模型"
+  },
+  "chunks": {
+    "message": "片段数"
+  },
+  "detectionFailed": {
+    "message": "检测失败"
+  },
+  "labelHuman": {
+    "message": "人类"
+  },
+  "labelAi": {
+    "message": "AI"
+  },
+  "contentOriginal": {
+    "message": "原创"
+  },
+  "contentRepost": {
+    "message": "搬运"
+  },
+  "contentAd": {
+    "message": "广告"
+  },
+  "detectionDisabled": {
+    "message": "检测已关闭。请在弹窗中开启。"
+  },
+  "noContentFound": {
+    "message": "未找到内容"
+  },
+  "textTooShort": {
+    "message": "文本过短（当前 $1 字，至少需要 $2 字）"
+  },
+  "noServiceWorkerResponse": {
+    "message": "未收到后台服务响应"
+  },
+  "notAnArticle": {
+    "message": "该页面看起来不是文章"
+  },
+  "couldNotExtract": {
+    "message": "无法提取文章内容"
+  },
+  "apiError": {
+    "message": "API 错误"
+  },
+  "networkError": {
+    "message": "网络错误"
+  }
+}

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <link rel="stylesheet" href="popup.css">
@@ -12,15 +12,15 @@
       <span class="slider"></span>
     </label>
   </div>
-  <p class="sub">AI Text Detector</p>
+  <p class="sub" data-i18n="appSubtitle">AI Text Detector</p>
 
   <div class="section">
-    <label for="apiUrl">API URL</label>
+    <label for="apiUrl" data-i18n="apiUrl">API URL</label>
     <input type="text" id="apiUrl" placeholder="http://localhost:8000">
   </div>
 
   <div class="section">
-    <label for="detector">AI detector</label>
+    <label for="detector" data-i18n="aiDetector">AI detector</label>
     <select id="detector">
       <option value="onnx_classifier">AIGC Detector</option>
       <option value="diveye">DivEye</option>
@@ -29,23 +29,24 @@
   </div>
 
   <div class="section">
-    <label for="contentEngine">Content type</label>
+    <label for="contentEngine" data-i18n="contentType">Content type</label>
     <select id="contentEngine">
-      <option value="off">Off</option>
+      <option value="off" data-i18n="off">Off</option>
       <option value="jev">Jev</option>
     </select>
   </div>
 
-  <button id="detectBtn">Detect Now</button>
+  <button id="detectBtn" data-i18n="detectNow">Detect Now</button>
 
   <div id="status" class="status"></div>
 
   <div class="footer">
-    <a href="#" id="optionsLink">Settings</a>
+    <a href="#" id="optionsLink" data-i18n="settings">Settings</a>
   </div>
 
   <script src="../shared/constants.js"></script>
   <script src="../shared/storage.js"></script>
+  <script src="../shared/i18n.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

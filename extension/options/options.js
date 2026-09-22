@@ -1,4 +1,6 @@
 (function () {
+  ALETHEIA.applyI18n();
+
   var apiUrlEl = document.getElementById("apiUrl");
   var testBtn = document.getElementById("testBtn");
   var testStatus = document.getElementById("testStatus");
@@ -29,12 +31,12 @@
   testBtn.addEventListener("click", function () {
     var url = apiUrlEl.value.trim();
     if (!url) {
-      showTestStatus("Please enter an API URL", false);
+      showTestStatus(ALETHEIA.t("enterApiUrl"), false);
       return;
     }
 
     testBtn.disabled = true;
-    testBtn.textContent = "Testing\u2026";
+    testBtn.textContent = ALETHEIA.t("testing");
     testStatus.className = "test-status";
 
     fetch(url + "/health")
@@ -44,17 +46,17 @@
       })
       .then(function (data) {
         if (data.status === "ok") {
-          showTestStatus("Connected successfully!", true);
+          showTestStatus(ALETHEIA.t("connectedOk"), true);
         } else {
-          showTestStatus("Unexpected response: " + JSON.stringify(data), false);
+          showTestStatus(ALETHEIA.t("unexpectedApiResponse") + JSON.stringify(data), false);
         }
       })
       .catch(function (err) {
-        showTestStatus("Connection failed: " + err.message, false);
+        showTestStatus(ALETHEIA.t("connectionFailed") + err.message, false);
       })
       .finally(function () {
         testBtn.disabled = false;
-        testBtn.textContent = "Test Connection";
+        testBtn.textContent = ALETHEIA.t("testConnection");
       });
   });
 
@@ -84,7 +86,7 @@
     };
 
     ALETHEIA.storage.set(data).then(function () {
-      saveStatus.textContent = "Settings saved!";
+      saveStatus.textContent = ALETHEIA.t("settingsSaved");
       saveStatus.className = "save-status show";
       setTimeout(function () {
         saveStatus.className = "save-status";
@@ -94,7 +96,7 @@
 
   // Reset to defaults
   resetBtn.addEventListener("click", function () {
-    if (!confirm("Reset all settings to defaults?")) return;
+    if (!confirm(ALETHEIA.t("confirmReset"))) return;
 
     var d = ALETHEIA.DEFAULTS;
     apiUrlEl.value = d.apiUrl;
@@ -117,7 +119,7 @@
       whitelist: [],
       enabled: true
     }).then(function () {
-      saveStatus.textContent = "Settings reset to defaults!";
+      saveStatus.textContent = ALETHEIA.t("settingsReset");
       saveStatus.className = "save-status show";
       setTimeout(function () {
         saveStatus.className = "save-status";

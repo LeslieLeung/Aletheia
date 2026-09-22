@@ -1,4 +1,4 @@
-importScripts("../shared/constants.js", "../shared/storage.js");
+importScripts("../shared/constants.js", "../shared/storage.js", "../shared/i18n.js");
 
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
   if (message.type === ALETHEIA.MSG.DETECT_TEXT) {
@@ -44,13 +44,13 @@ async function handleDetect(message) {
       }
       return {
         success: false,
-        error: errData.detail || response.statusText || "API error"
+        error: errData.detail || response.statusText || ALETHEIA.t("apiError")
       };
     }
 
     var data = await response.json();
     return { success: true, data: data };
   } catch (err) {
-    return { success: false, error: err.message || "Network error" };
+    return { success: false, error: err.message || ALETHEIA.t("networkError") };
   }
 }

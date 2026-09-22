@@ -146,21 +146,28 @@ ALETHEIA.badge = (function () {
     wrapper.innerHTML =
       '<div class="badge-pill loading">' +
         '<div class="spinner"></div>' +
-        '<span>Detecting\u2026</span>' +
+        '<span>' + esc(ALETHEIA.t("detecting")) + '</span>' +
       '</div>';
   }
 
-  var CONTENT_LABELS = {
-    original: "\u539f\u521b",
-    repost: "\u642c\u8fd0",
-    ad: "\u5e7f\u544a"
+  var CONTENT_KEYS = {
+    original: "contentOriginal",
+    repost: "contentRepost",
+    ad: "contentAd"
   };
+
+  function resultLabel(label) {
+    if (label === "human") return ALETHEIA.t("labelHuman");
+    if (label === "ai") return ALETHEIA.t("labelAi");
+    return label;
+  }
 
   function contentRow(data) {
     if (!data.content || !data.content.label) return "";
-    var name = CONTENT_LABELS[data.content.label] || data.content.label;
+    var key = CONTENT_KEYS[data.content.label];
+    var name = key ? ALETHEIA.t(key) : data.content.label;
     var confidence = (data.content.confidence * 100).toFixed(1);
-    return '<div class="panel-row"><span class="panel-key">\u5185\u5bb9</span><span class="panel-val">' +
+    return '<div class="panel-row"><span class="panel-key">' + esc(ALETHEIA.t("content")) + '</span><span class="panel-val">' +
       esc(name) + " " + confidence + "%</span></div>";
   }
 
@@ -168,6 +175,7 @@ ALETHEIA.badge = (function () {
     create();
     currentResult = data;
     var label = data.label;
+    var displayLabel = resultLabel(label);
     var score = (data.score * 100).toFixed(1);
     var cls = label === "human" ? "human" : "ai";
 
@@ -176,17 +184,17 @@ ALETHEIA.badge = (function () {
       '<div class="panel" id="panel">' +
         '<button class="close-btn" id="close-panel">\u00d7</button>' +
         '<div class="panel-title">' +
-          '<span class="panel-label ' + cls + '">' + esc(label) + '</span>' +
-          '<span>Detection Result</span>' +
+          '<span class="panel-label ' + cls + '">' + esc(displayLabel) + '</span>' +
+          '<span>' + esc(ALETHEIA.t("detectionResult")) + '</span>' +
         '</div>' +
-        '<div class="panel-row"><span class="panel-key">Confidence</span><span class="panel-val">' + score + '%</span></div>' +
+        '<div class="panel-row"><span class="panel-key">' + esc(ALETHEIA.t("confidence")) + '</span><span class="panel-val">' + score + '%</span></div>' +
         contentRow(data) +
-        '<div class="panel-row"><span class="panel-key">Language</span><span class="panel-val">' + esc(data.detected_lang) + '</span></div>' +
-        '<div class="panel-row"><span class="panel-key">Model</span><span class="panel-val">' + esc(data.model_id) + '</span></div>' +
-        '<div class="panel-row"><span class="panel-key">Chunks</span><span class="panel-val">' + esc(String(data.num_chunks)) + '</span></div>' +
+        '<div class="panel-row"><span class="panel-key">' + esc(ALETHEIA.t("language")) + '</span><span class="panel-val">' + esc(data.detected_lang) + '</span></div>' +
+        '<div class="panel-row"><span class="panel-key">' + esc(ALETHEIA.t("model")) + '</span><span class="panel-val">' + esc(data.model_id) + '</span></div>' +
+        '<div class="panel-row"><span class="panel-key">' + esc(ALETHEIA.t("chunks")) + '</span><span class="panel-val">' + esc(String(data.num_chunks)) + '</span></div>' +
       '</div>' +
       '<div class="badge-pill ' + cls + '" id="pill">' +
-        '<span>' + label.toUpperCase() + ' ' + score + '%</span>' +
+        '<span>' + esc(displayLabel) + ' ' + score + '%</span>' +
       '</div>';
 
     var pill = shadow.getElementById("pill");
@@ -209,11 +217,12 @@ ALETHEIA.badge = (function () {
     create();
     currentResult = null;
     var wrapper = getWrapper();
+    var failed = ALETHEIA.t("detectionFailed");
     wrapper.innerHTML =
       '<div class="badge-pill error">' +
-        '<span>Detection failed</span>' +
+        '<span>' + esc(failed) + '</span>' +
       '</div>' +
-      '<div class="tooltip">' + esc(msg || "Detection failed") + '</div>';
+      '<div class="tooltip">' + esc(msg || failed) + '</div>';
   }
 
   function remove() {

@@ -1,31 +1,31 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Aletheia Settings</title>
+<title data-i18n="optionsTitle">Aletheia Settings</title>
 <link rel="stylesheet" href="options.css">
 </head>
 <body>
   <div class="container">
-    <h1>Aletheia Settings</h1>
-    <p class="sub">Configure the AI Text Detector extension.</p>
+    <h1 data-i18n="optionsTitle">Aletheia Settings</h1>
+    <p class="sub" data-i18n="optionsSubtitle">Configure the AI Text Detector extension.</p>
 
     <div class="card">
-      <h2>API Connection</h2>
+      <h2 data-i18n="apiConnection">API Connection</h2>
       <div class="field">
-        <label for="apiUrl">API URL</label>
+        <label for="apiUrl" data-i18n="apiUrl">API URL</label>
         <div class="input-row">
           <input type="text" id="apiUrl" placeholder="http://localhost:8000">
-          <button id="testBtn" class="btn-secondary">Test Connection</button>
+          <button id="testBtn" class="btn-secondary" data-i18n="testConnection">Test Connection</button>
         </div>
         <div id="testStatus" class="test-status"></div>
       </div>
     </div>
 
     <div class="card">
-      <h2>Detection</h2>
+      <h2 data-i18n="detection">Detection</h2>
       <div class="field">
-        <label for="detector">AI detector</label>
+        <label for="detector" data-i18n="aiDetector">AI detector</label>
         <select id="detector">
           <option value="onnx_classifier">AIGC Detector</option>
           <option value="diveye">DivEye</option>
@@ -33,50 +33,50 @@
         </select>
       </div>
       <div class="field">
-        <label for="contentEngine">Content type</label>
+        <label for="contentEngine" data-i18n="contentType">Content type</label>
         <select id="contentEngine">
-          <option value="off">Off</option>
+          <option value="off" data-i18n="off">Off</option>
           <option value="jev">Jev</option>
         </select>
-        <p class="field-hint">Classify the page as 原创, 搬运, or 广告. Off leaves the AI result unchanged.</p>
+        <p class="field-hint" data-i18n="contentTypeHint">Classify the page as original, repost, or ad. Off leaves the AI result unchanged.</p>
       </div>
       <div class="field">
-        <label for="strategy">Strategy</label>
+        <label for="strategy" data-i18n="strategy">Strategy</label>
         <select id="strategy">
-          <option value="truncate">Truncate</option>
-          <option value="sliding_avg">Sliding Average</option>
-          <option value="sliding_weighted_avg">Weighted Average</option>
-          <option value="sliding_vote">Sliding Vote</option>
+          <option value="truncate" data-i18n="strategyTruncate">Truncate</option>
+          <option value="sliding_avg" data-i18n="strategySlidingAvg">Sliding Average</option>
+          <option value="sliding_weighted_avg" data-i18n="strategyWeightedAvg">Weighted Average</option>
+          <option value="sliding_vote" data-i18n="strategySlidingVote">Sliding Vote</option>
         </select>
       </div>
       <div class="field">
         <label class="check-label">
           <input type="checkbox" id="earlyStop">
-          <span>Early stop (skip remaining chunks when confidence is high)</span>
+          <span data-i18n="earlyStop">Early stop (skip remaining chunks when confidence is high)</span>
         </label>
       </div>
       <div class="field">
-        <label for="minTextLength">Minimum text length (characters)</label>
+        <label for="minTextLength" data-i18n="minTextLength">Minimum text length (characters)</label>
         <input type="number" id="minTextLength" min="50" max="5000" step="50">
       </div>
     </div>
 
     <div class="card">
-      <h2>Domain Filtering</h2>
-      <p class="field-hint">Whitelist takes priority: whitelisted domains are always detected, blacklisted domains are always skipped. One domain per line.</p>
+      <h2 data-i18n="domainFiltering">Domain Filtering</h2>
+      <p class="field-hint" data-i18n="domainHint">Whitelist takes priority: whitelisted domains are always detected, blacklisted domains are always skipped. One domain per line.</p>
       <div class="field">
-        <label for="whitelist">Whitelist (always detect on these domains)</label>
+        <label for="whitelist" data-i18n="whitelistLabel">Whitelist (always detect on these domains)</label>
         <textarea id="whitelist" rows="4" placeholder="medium.com&#10;nytimes.com"></textarea>
       </div>
       <div class="field">
-        <label for="blacklist">Blacklist (never detect on these domains)</label>
+        <label for="blacklist" data-i18n="blacklistLabel">Blacklist (never detect on these domains)</label>
         <textarea id="blacklist" rows="6" placeholder="google.com&#10;youtube.com"></textarea>
       </div>
     </div>
 
     <div class="actions">
-      <button id="saveBtn">Save Settings</button>
-      <button id="resetBtn" class="btn-secondary">Reset to Defaults</button>
+      <button id="saveBtn" data-i18n="saveSettings">Save Settings</button>
+      <button id="resetBtn" class="btn-secondary" data-i18n="resetDefaults">Reset to Defaults</button>
     </div>
 
     <div id="saveStatus" class="save-status"></div>
@@ -84,6 +84,7 @@
 
   <script src="../shared/constants.js"></script>
   <script src="../shared/storage.js"></script>
+  <script src="../shared/i18n.js"></script>
   <script src="options.js"></script>
 </body>
 </html>
