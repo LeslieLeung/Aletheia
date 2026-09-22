@@ -25,11 +25,20 @@
     <div class="card">
       <h2>Detection</h2>
       <div class="field">
-        <label for="detector">Detector</label>
+        <label for="detector">AI detector</label>
         <select id="detector">
-          <option value="onnx_classifier">ONNX Classifier</option>
+          <option value="onnx_classifier">AIGC Detector</option>
           <option value="diveye">DivEye</option>
+          <option value="jev">Jev</option>
         </select>
+      </div>
+      <div class="field">
+        <label for="contentEngine">Content type</label>
+        <select id="contentEngine">
+          <option value="off">Off</option>
+          <option value="jev">Jev</option>
+        </select>
+        <p class="field-hint">Classify the page as 原创, 搬运, or 广告. Off leaves the AI result unchanged.</p>
       </div>
       <div class="field">
         <label for="strategy">Strategy</label>

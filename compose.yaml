@@ -3,3 +3,5 @@ services:
     build: .
     ports:
       - "8000:8000"
+    environment:
+      TYPESAFE_API_KEY: ${TYPESAFE_API_KEY:-}

@@ -59,7 +59,12 @@ var ALETHEIA = self.ALETHEIA || {};
       ALETHEIA.badge.showLoading();
 
       chrome.runtime.sendMessage(
-        { type: ALETHEIA.MSG.DETECT_TEXT, text: text },
+        {
+          type: ALETHEIA.MSG.DETECT_TEXT,
+          text: text,
+          title: article.title || "",
+          url: location.href
+        },
         function (response) {
           if (chrome.runtime.lastError) {
             ALETHEIA.badge.showError(chrome.runtime.lastError.message);

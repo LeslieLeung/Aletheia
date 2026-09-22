@@ -2,7 +2,7 @@
 
 [中文文档](README_zh.md)
 
-A FastAPI service for detecting AI-generated text, based on [AIGC_text_detector](https://github.com/YuchuanTian/AIGC_text_detector) and [DivEye](https://github.com/IBM/diveye).
+A FastAPI service for detecting AI-generated text, based on [AIGC_text_detector](https://github.com/YuchuanTian/AIGC_text_detector), [DivEye](https://github.com/IBM/diveye), and [Jev](https://docs.typesafe.ai/introduction). Jev can also classify a page as original, repost, or an advertisement.
 
 ## Quick Start (Docker)
 
@@ -60,9 +60,13 @@ Detect whether text is human-written or AI-generated.
 |------------|--------|----------|--------------|-----------------------------------------------------------------------------|
 | `text`     | string | yes      |              | Text to detect                                                              |
 | `lang`     | string | no       | auto-detect  | `"zh"` for Chinese model, anything else for English                         |
-| `model_id` | string | no       | (by lang)    | HuggingFace model ID; overrides `lang`                                      |
-| `strategy`   | string | no       | `"truncate"` | `"truncate"`, `"sliding_avg"`, `"sliding_weighted_avg"`, or `"sliding_vote"` |
-| `early_stop` | bool   | no       | `false`      | Stop early when confidence is high enough (sliding strategies only)           |
+| `model_id` | string | no       | (by lang)    | HuggingFace model ID; overrides `lang`. Ignored by `jev`.                   |
+| `strategy`   | string | no       | `"truncate"` | `"truncate"`, `"sliding_avg"`, `"sliding_weighted_avg"`, or `"sliding_vote"`. Ignored by `jev`. |
+| `early_stop` | bool   | no       | `false`      | Stop early when confidence is high enough (sliding strategies only). Ignored by `jev`. |
+| `detector`   | string | no       | `"onnx_classifier"` | `"onnx_classifier"` (AIGC Detector), `"diveye"`, or `"jev"` |
+| `title`      | string | no       |              | Page title. Sent to a decision engine with the text. |
+| `url`        | string | no       |              | Page URL. Sent to a decision engine with the text. |
+| `content_engine` | string | no   |              | `"jev"` to also classify the page as original, repost, or ad. Omit to skip. |
 
 **Strategies:**
 
@@ -89,8 +93,36 @@ curl -X POST http://localhost:8000/detect \
   "score": 0.98,
   "model_id": "yuchuantian/AIGC_detector_env3",
   "detected_lang": "en",
-  "num_chunks": 1
+  "num_chunks": 1,
+  "detector": "onnx_classifier"
 }
+```
+
+With `content_engine` set, the response also includes `content`. `label` is one of `original` (原创), `repost` (搬运), or `ad` (广告; both 软广 and 硬广). When `detector` and `content_engine` are both `jev`, both judgments come from one API call.
+
+```json
+{
+  "label": "ai",
+  "score": 0.91,
+  "model_id": "jev-latest",
+  "detected_lang": "zh",
+  "num_chunks": 1,
+  "detector": "jev",
+  "content": {
+    "engine": "jev",
+    "model_id": "jev-latest",
+    "label": "ad",
+    "confidence": 0.81,
+    "probabilities": {"original": 0.07, "repost": 0.12, "ad": 0.81}
+  }
+}
+```
+
+Jev reads `TYPESAFE_API_KEY` on the server (optional `TYPESAFE_BASE_URL` and `TYPESAFE_DEFAULT_MODEL`, default `jev-latest`). A missing key returns HTTP 503. Pass the key through when starting Compose:
+
+```bash
+export TYPESAFE_API_KEY="your-key"
+docker compose up --build
 ```
 
 ### `GET /health`
@@ -120,3 +152,9 @@ DivEye detects AI-generated text using surprisal-based statistical features that
 > Advik Raj Basani, Pin-Yu Chen. *Diversity Boosts AI-Generated Text Detection.* TMLR 2026.
 
 Source: [IBM/diveye](https://github.com/IBM/diveye)
+
+### Jev
+
+[Jev](https://docs.typesafe.ai/introduction) is a TypeSafe decision model. It can answer the AI question and the content question (原创 / 搬运 / 广告) in one request. The question text lives in [`app/engines/questions.py`](app/engines/questions.py) as plain data, not as SDK types.
+
+To add another decision engine, implement `DecisionEngine.judge(state, *, include_ai, include_content)` in `app/engines`, register the instance in [`app/main.py`](app/main.py), and add its name to `DetectorType` and `ContentEngine` in [`app/schemas.py`](app/schemas.py). The `/detect` request and response stay the same.
