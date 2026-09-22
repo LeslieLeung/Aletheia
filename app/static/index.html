@@ -37,6 +37,7 @@ button:disabled{opacity:.6;cursor:not-allowed}
 .badge{display:inline-block;padding:.25rem .7rem;border-radius:999px;font-weight:700;font-size:.95rem;text-transform:uppercase}
 .badge.human{background:#dcfce7;color:#166534}
 .badge.ai{background:#fee2e2;color:#991b1b}
+.badge.content{background:#e0e7ff;color:#3730a3;text-transform:none;margin-left:.4rem}
 .meta{margin-top:.65rem;font-size:.82rem;color:#555;line-height:1.8;display:grid;grid-template-columns:max-content 1fr;gap:0 .5rem}
 .meta .k{color:#888}
 .meta .v{font-weight:600;color:#333}
@@ -81,13 +82,25 @@ button:disabled{opacity:.6;cursor:not-allowed}
     <div class="detector-options">
       <div class="detector-option">
         <input type="checkbox" id="det-onnx" value="onnx_classifier" checked>
-        <label for="det-onnx">ONNX Classifier</label>
+        <label for="det-onnx">AIGC Detector</label>
       </div>
       <div class="detector-option">
         <input type="checkbox" id="det-diveye" value="diveye">
         <label for="det-diveye">DivEye</label>
       </div>
+      <div class="detector-option">
+        <input type="checkbox" id="det-jev" value="jev">
+        <label for="det-jev">Jev</label>
+      </div>
     </div>
+  </div>
+
+  <div class="field" style="margin-top:.75rem;max-width:220px">
+    <label for="content_engine">Content type</label>
+    <select id="content_engine">
+      <option value="">Off</option>
+      <option value="jev">Jev</option>
+    </select>
   </div>
 
   <div class="check-field">
@@ -103,7 +116,8 @@ button:disabled{opacity:.6;cursor:not-allowed}
 </div>
 
 <script>
-const DETECTOR_LABELS = {onnx_classifier: 'ONNX Classifier', diveye: 'DivEye'};
+const DETECTOR_LABELS = {onnx_classifier: 'AIGC Detector', diveye: 'DivEye', jev: 'Jev'};
+const CONTENT_LABELS = {original: '原创', repost: '搬运', ad: '广告'};
 
 async function run() {
   const btn = document.getElementById('btn');
@@ -130,6 +144,10 @@ async function run() {
   if (lang) baseBody.lang = lang;
   const mid = document.getElementById('model_id').value.trim();
   if (mid) baseBody.model_id = mid;
+  const contentEngine = document.getElementById('content_engine').value;
+  const contentTarget = contentEngine
+    ? (detectors.includes(contentEngine) ? contentEngine : detectors[0])
+    : null;
 
   // Build result cards (one per detector) before firing requests
   const grid = document.getElementById('results-grid');
@@ -148,7 +166,11 @@ async function run() {
     fetch('/detect', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({...baseBody, detector: det}),
+      body: JSON.stringify({
+        ...baseBody,
+        detector: det,
+        ...(det === contentTarget ? {content_engine: contentEngine} : {}),
+      }),
     })
     .then(r => r.ok ? r.json() : r.json().then(e => Promise.reject(new Error(e.detail || r.statusText))))
   );
@@ -161,14 +183,18 @@ async function run() {
     card.classList.remove('loading');
     if (res.status === 'fulfilled') {
       const d = res.value;
+      const contentHtml = d.content
+        ? `<span class="badge content">${CONTENT_LABELS[d.content.label] || d.content.label} ${(d.content.confidence*100).toFixed(1)}%</span>`
+        : '';
       card.innerHTML =
         `<div class="card-title">${DETECTOR_LABELS[det] || det}</div>`+
-        `<div><span class="badge ${d.label}">${d.label}</span></div>`+
+        `<div><span class="badge ${d.label}">${d.label}</span>${contentHtml}</div>`+
         `<div class="meta">`+
           `<span class="k">Score</span><span class="v">${(d.score*100).toFixed(1)}%</span>`+
           `<span class="k">Language</span><span class="v">${d.detected_lang}</span>`+
           `<span class="k">Model</span><span class="v">${d.model_id}</span>`+
           `<span class="k">Chunks</span><span class="v">${d.num_chunks}</span>`+
+          (d.content ? `<span class="k">Content</span><span class="v">${CONTENT_LABELS[d.content.label] || d.content.label}</span>` : '')+
         `</div>`;
     } else {
       card.innerHTML =

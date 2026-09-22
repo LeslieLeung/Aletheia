@@ -150,6 +150,20 @@ ALETHEIA.badge = (function () {
       '</div>';
   }
 
+  var CONTENT_LABELS = {
+    original: "\u539f\u521b",
+    repost: "\u642c\u8fd0",
+    ad: "\u5e7f\u544a"
+  };
+
+  function contentRow(data) {
+    if (!data.content || !data.content.label) return "";
+    var name = CONTENT_LABELS[data.content.label] || data.content.label;
+    var confidence = (data.content.confidence * 100).toFixed(1);
+    return '<div class="panel-row"><span class="panel-key">\u5185\u5bb9</span><span class="panel-val">' +
+      esc(name) + " " + confidence + "%</span></div>";
+  }
+
   function showResult(data) {
     create();
     currentResult = data;
@@ -166,6 +180,7 @@ ALETHEIA.badge = (function () {
           '<span>Detection Result</span>' +
         '</div>' +
         '<div class="panel-row"><span class="panel-key">Confidence</span><span class="panel-val">' + score + '%</span></div>' +
+        contentRow(data) +
         '<div class="panel-row"><span class="panel-key">Language</span><span class="panel-val">' + esc(data.detected_lang) + '</span></div>' +
         '<div class="panel-row"><span class="panel-key">Model</span><span class="panel-val">' + esc(data.model_id) + '</span></div>' +
         '<div class="panel-row"><span class="panel-key">Chunks</span><span class="panel-val">' + esc(String(data.num_chunks)) + '</span></div>' +

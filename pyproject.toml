@@ -13,10 +13,13 @@ dependencies = [
     "uvicorn[standard]>=0.41.0",
     "scikit-learn>=1.4.0",
     "xgboost>=2.0.0",
+    "typesafe-sdk>=0.7.1",
 ]
 
 [tool.uv]
-environments = ["python_version >= '3.12' and python_version < '3.14'"]
+environments = [
+    "python_version >= '3.12' and python_version < '3.14' and sys_platform != 'emscripten'",
+]
 
 [dependency-groups]
 dev = [

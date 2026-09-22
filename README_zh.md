@@ -1,6 +1,6 @@
 # Aletheia – AIGC 文本检测 API
 
-基于 [AIGC_text_detector](https://github.com/YuchuanTian/AIGC_text_detector) 和 [DivEye](https://github.com/IBM/diveye) 的 FastAPI 服务，用于检测文本是否由 AI 生成。
+基于 [AIGC_text_detector](https://github.com/YuchuanTian/AIGC_text_detector)、[DivEye](https://github.com/IBM/diveye) 和 [Jev](https://docs.typesafe.ai/introduction) 的 FastAPI 服务，用于检测文本是否由 AI 生成。Jev 还可以把页面分成原创、搬运或广告。
 
 ## 快速开始 (Docker)
 
@@ -58,9 +58,13 @@ docker compose up --build
 |-------------|--------|------|-------------|-----------------------------------------------------------------------------|
 | `text`      | string | 是   |             | 待检测文本                                                                    |
 | `lang`      | string | 否   | 自动检测     | `"zh"` 使用中文模型，其他值使用英文模型                                            |
-| `model_id`  | string | 否   | 按语言决定   | HuggingFace 模型 ID，优先级高于 `lang`                                          |
-| `strategy`  | string | 否   | `"truncate"` | `"truncate"`、`"sliding_avg"`、`"sliding_weighted_avg"` 或 `"sliding_vote"`    |
-| `early_stop`| bool   | 否   | `false`     | 置信度足够高时提前停止（仅限滑动窗口策略）                                          |
+| `model_id`  | string | 否   | 按语言决定   | HuggingFace 模型 ID，优先级高于 `lang`。`jev` 会忽略该字段。 |
+| `strategy`  | string | 否   | `"truncate"` | `"truncate"`、`"sliding_avg"`、`"sliding_weighted_avg"` 或 `"sliding_vote"`。`jev` 会忽略该字段。 |
+| `early_stop`| bool   | 否   | `false`     | 置信度足够高时提前停止（仅限滑动窗口策略）。`jev` 会忽略该字段。 |
+| `detector`  | string | 否   | `"onnx_classifier"` | `"onnx_classifier"`（AIGC Detector）、`"diveye"` 或 `"jev"` |
+| `title`     | string | 否   |             | 页面标题，会和正文一起交给决策引擎 |
+| `url`       | string | 否   |             | 页面 URL，会和正文一起交给决策引擎 |
+| `content_engine` | string | 否 |          | 设为 `"jev"` 时同时判断原创、搬运或广告。省略则不做内容分类。 |
 
 **策略说明：**
 
@@ -87,8 +91,36 @@ curl -X POST http://localhost:8000/detect \
   "score": 0.98,
   "model_id": "yuchuantian/AIGC_detector_zhv3",
   "detected_lang": "zh",
-  "num_chunks": 1
+  "num_chunks": 1,
+  "detector": "onnx_classifier"
 }
+```
+
+设置 `content_engine` 后，响应会多一个 `content`。`label` 为 `original`（原创）、`repost`（搬运）或 `ad`（广告，软广和硬广都算广告）。`detector` 和 `content_engine` 都是 `jev` 时，两次判断来自同一次 API 调用。
+
+```json
+{
+  "label": "ai",
+  "score": 0.91,
+  "model_id": "jev-latest",
+  "detected_lang": "zh",
+  "num_chunks": 1,
+  "detector": "jev",
+  "content": {
+    "engine": "jev",
+    "model_id": "jev-latest",
+    "label": "ad",
+    "confidence": 0.81,
+    "probabilities": {"original": 0.07, "repost": 0.12, "ad": 0.81}
+  }
+}
+```
+
+Jev 在服务端读取 `TYPESAFE_API_KEY`（可选 `TYPESAFE_BASE_URL` 和 `TYPESAFE_DEFAULT_MODEL`，默认 `jev-latest`）。没有密钥时返回 HTTP 503。用 Compose 启动时把密钥传进去：
+
+```bash
+export TYPESAFE_API_KEY="your-key"
+docker compose up --build
 ```
 
 ### `GET /health`
@@ -118,3 +150,9 @@ DivEye 通过基于 **surprisal（惊异度）** 的统计特征检测 AI 生成
 > Advik Raj Basani, Pin-Yu Chen. *Diversity Boosts AI-Generated Text Detection.* TMLR 2026.
 
 来源：[IBM/diveye](https://github.com/IBM/diveye)
+
+### Jev
+
+[Jev](https://docs.typesafe.ai/introduction) 是 TypeSafe 的决策模型。它可以在一次请求里同时回答「是否 AI 生成」和内容分类（原创 / 搬运 / 广告）。题目写在 [`app/engines/questions.py`](app/engines/questions.py) 里，是普通数据，不是 SDK 类型。
+
+要再接一个决策引擎，在 `app/engines` 里实现 `DecisionEngine.judge(state, *, include_ai, include_content)`，在 [`app/main.py`](app/main.py) 注册实例，并把名字加到 [`app/schemas.py`](app/schemas.py) 的 `DetectorType` 和 `ContentEngine`。`/detect` 的请求和响应不用改。

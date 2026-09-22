@@ -2,6 +2,7 @@
   var enabledEl = document.getElementById("enabled");
   var apiUrlEl = document.getElementById("apiUrl");
   var detectorEl = document.getElementById("detector");
+  var contentEngineEl = document.getElementById("contentEngine");
   var detectBtn = document.getElementById("detectBtn");
   var statusEl = document.getElementById("status");
   var optionsLink = document.getElementById("optionsLink");
@@ -11,6 +12,7 @@
     enabledEl.checked = settings.enabled;
     apiUrlEl.value = settings.apiUrl;
     detectorEl.value = settings.detector;
+    contentEngineEl.value = settings.contentEngine || ALETHEIA.DEFAULTS.contentEngine;
   });
 
   // Save enabled toggle
@@ -21,6 +23,10 @@
   // Save detector on change
   detectorEl.addEventListener("change", function () {
     ALETHEIA.storage.set({ detector: detectorEl.value });
+  });
+
+  contentEngineEl.addEventListener("change", function () {
+    ALETHEIA.storage.set({ contentEngine: contentEngineEl.value });
   });
 
   // Save API URL on blur

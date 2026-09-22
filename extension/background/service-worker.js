@@ -2,7 +2,7 @@ importScripts("../shared/constants.js", "../shared/storage.js");
 
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
   if (message.type === ALETHEIA.MSG.DETECT_TEXT) {
-    handleDetect(message.text).then(sendResponse);
+    handleDetect(message).then(sendResponse);
     return true; // keep channel open for async response
   }
   if (message.type === ALETHEIA.MSG.GET_STATUS) {
@@ -13,16 +13,21 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
   }
 });
 
-async function handleDetect(text) {
+async function handleDetect(message) {
   try {
     var settings = await ALETHEIA.storage.get();
 
     var body = {
-      text: text,
+      text: message.text,
       strategy: settings.strategy,
       early_stop: settings.earlyStop,
       detector: settings.detector
     };
+    if (message.title) body.title = message.title;
+    if (message.url) body.url = message.url;
+    if (settings.contentEngine && settings.contentEngine !== "off") {
+      body.content_engine = settings.contentEngine;
+    }
 
     var response = await fetch(settings.apiUrl + "/detect", {
       method: "POST",
