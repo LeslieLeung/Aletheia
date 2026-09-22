@@ -8,6 +8,7 @@
   var contentEngineEl = document.getElementById("contentEngine");
   var strategyEl = document.getElementById("strategy");
   var earlyStopEl = document.getElementById("earlyStop");
+  var showBadgePercentEl = document.getElementById("showBadgePercent");
   var minTextLengthEl = document.getElementById("minTextLength");
   var blacklistEl = document.getElementById("blacklist");
   var whitelistEl = document.getElementById("whitelist");
@@ -22,6 +23,7 @@
     contentEngineEl.value = s.contentEngine || ALETHEIA.DEFAULTS.contentEngine;
     strategyEl.value = s.strategy;
     earlyStopEl.checked = s.earlyStop;
+    showBadgePercentEl.checked = !!s.showBadgePercent;
     minTextLengthEl.value = s.minTextLength;
     blacklistEl.value = (s.blacklist || []).join("\n");
     whitelistEl.value = (s.whitelist || []).join("\n");
@@ -80,6 +82,7 @@
       contentEngine: contentEngineEl.value,
       strategy: strategyEl.value,
       earlyStop: earlyStopEl.checked,
+      showBadgePercent: showBadgePercentEl.checked,
       minTextLength: parseInt(minTextLengthEl.value, 10) || ALETHEIA.DEFAULTS.minTextLength,
       blacklist: parseDomains(blacklistEl.value),
       whitelist: parseDomains(whitelistEl.value)
@@ -104,6 +107,7 @@
     contentEngineEl.value = d.contentEngine;
     strategyEl.value = d.strategy;
     earlyStopEl.checked = d.earlyStop;
+    showBadgePercentEl.checked = d.showBadgePercent;
     minTextLengthEl.value = d.minTextLength;
     blacklistEl.value = d.blacklist.join("\n");
     whitelistEl.value = "";
@@ -114,6 +118,7 @@
       contentEngine: d.contentEngine,
       strategy: d.strategy,
       earlyStop: d.earlyStop,
+      showBadgePercent: d.showBadgePercent,
       minTextLength: d.minTextLength,
       blacklist: d.blacklist.slice(),
       whitelist: [],

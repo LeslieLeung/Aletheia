@@ -36,6 +36,30 @@ ALETHEIA.badge = (function () {
         box-shadow: 0 4px 12px rgba(0,0,0,0.25); \
         transform: translateY(-1px); \
       } \
+      .badge-pill.loading:hover { \
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15); \
+        transform: none; \
+      } \
+      .badge-pill.sized { \
+        justify-content: center; \
+        width: 200px; \
+        height: 32px; \
+        padding: 0 10px; \
+        letter-spacing: 0; \
+        font-variant-numeric: tabular-nums; \
+        white-space: nowrap; \
+      } \
+      .badge-pill .sep { \
+        width: 1px; \
+        height: 12px; \
+        background: currentColor; \
+        opacity: 0.4; \
+        flex: 0 0 1px; \
+      } \
+      .badge-pill .content-name { \
+        text-transform: none; \
+        letter-spacing: 0; \
+      } \
       .badge-pill.loading { \
         background: #f3f4f6; color: #6b7280; \
         cursor: default; \
@@ -162,21 +186,37 @@ ALETHEIA.badge = (function () {
     return label;
   }
 
-  function contentRow(data) {
-    if (!data.content || !data.content.label) return "";
+  function contentInfo(data) {
+    if (!data.content || !data.content.label) return null;
     var key = CONTENT_KEYS[data.content.label];
-    var name = key ? ALETHEIA.t(key) : data.content.label;
-    var confidence = (data.content.confidence * 100).toFixed(1);
-    return '<div class="panel-row"><span class="panel-key">' + esc(ALETHEIA.t("content")) + '</span><span class="panel-val">' +
-      esc(name) + " " + confidence + "%</span></div>";
+    return {
+      name: key ? ALETHEIA.t(key) : data.content.label,
+      confidence: (data.content.confidence * 100).toFixed(1)
+    };
   }
 
-  function showResult(data) {
+  function contentRow(data) {
+    var info = contentInfo(data);
+    if (!info) return "";
+    return '<div class="panel-row"><span class="panel-key">' + esc(ALETHEIA.t("content")) + '</span><span class="panel-val">' +
+      esc(info.name) + " " + info.confidence + "%</span></div>";
+  }
+
+  function pillInner(displayLabel, score, data, showPercent) {
+    var info = contentInfo(data);
+    var labelText = showPercent ? displayLabel + " " + score + "%" : displayLabel;
+    var html = "<span>" + esc(labelText) + "</span>";
+    if (!info) return html;
+    return html + '<span class="sep"></span><span class="content-name">' + esc(info.name) + "</span>";
+  }
+
+  function showResult(data, options) {
     create();
     currentResult = data;
     var label = data.label;
     var displayLabel = resultLabel(label);
     var score = (data.score * 100).toFixed(1);
+    var showPercent = !!(options && options.showPercent);
     var cls = label === "human" ? "human" : "ai";
 
     var wrapper = getWrapper();
@@ -193,8 +233,8 @@ ALETHEIA.badge = (function () {
         '<div class="panel-row"><span class="panel-key">' + esc(ALETHEIA.t("model")) + '</span><span class="panel-val">' + esc(data.model_id) + '</span></div>' +
         '<div class="panel-row"><span class="panel-key">' + esc(ALETHEIA.t("chunks")) + '</span><span class="panel-val">' + esc(String(data.num_chunks)) + '</span></div>' +
       '</div>' +
-      '<div class="badge-pill ' + cls + '" id="pill">' +
-        '<span>' + esc(displayLabel) + ' ' + score + '%</span>' +
+      '<div class="badge-pill sized ' + cls + '" id="pill">' +
+        pillInner(displayLabel, score, data, showPercent) +
       '</div>';
 
     var pill = shadow.getElementById("pill");

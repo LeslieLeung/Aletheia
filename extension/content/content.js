@@ -75,7 +75,9 @@ var ALETHEIA = self.ALETHEIA || {};
             return;
           }
           if (response.success) {
-            ALETHEIA.badge.showResult(response.data);
+            ALETHEIA.badge.showResult(response.data, {
+              showPercent: !!settings.showBadgePercent
+            });
           } else {
             ALETHEIA.badge.showError(response.error);
           }

@@ -91,6 +91,9 @@
   "earlyStop": {
     "message": "提前停止（置信度足够高时跳过剩余片段）"
   },
+  "showBadgePercent": {
+    "message": "在徽章上显示百分比"
+  },
   "minTextLength": {
     "message": "最小文本长度（字符数）"
   },

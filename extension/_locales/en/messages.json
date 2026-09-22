@@ -91,6 +91,9 @@
   "earlyStop": {
     "message": "Early stop (skip remaining chunks when confidence is high)"
   },
+  "showBadgePercent": {
+    "message": "Show percentage on the badge"
+  },
   "minTextLength": {
     "message": "Minimum text length (characters)"
   },
