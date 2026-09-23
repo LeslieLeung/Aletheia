@@ -4,7 +4,7 @@ ALETHEIA.extractArticle = function (options) {
   var skipCheck = options && options.skipReadabilityCheck;
 
   if (!skipCheck && typeof isProbablyReaderable === "function" && !isProbablyReaderable(document)) {
-    return { skipped: true, reason: "Page does not appear to be an article" };
+    return { skipped: true, reason: ALETHEIA.t("notAnArticle") };
   }
 
   var docClone = document.cloneNode(true);
@@ -12,7 +12,7 @@ ALETHEIA.extractArticle = function (options) {
   var article = reader.parse();
 
   if (!article || !article.textContent) {
-    return { skipped: true, reason: "Could not extract article content" };
+    return { skipped: true, reason: ALETHEIA.t("couldNotExtract") };
   }
 
   return {

@@ -32,7 +32,7 @@ var ALETHEIA = self.ALETHEIA || {};
 
     ALETHEIA.storage.get().then(function (settings) {
       if (!settings.enabled) {
-        if (manual) ALETHEIA.badge.showError("Detection is disabled. Enable it in the popup.");
+        if (manual) ALETHEIA.badge.showError(ALETHEIA.t("detectionDisabled"));
         return;
       }
 
@@ -41,7 +41,7 @@ var ALETHEIA = self.ALETHEIA || {};
       var article = ALETHEIA.extractArticle({ skipReadabilityCheck: !!manual });
 
       if (!article || article.skipped) {
-        if (manual) ALETHEIA.badge.showError(article ? article.reason : "No content found");
+        if (manual) ALETHEIA.badge.showError(article ? article.reason : ALETHEIA.t("noContentFound"));
         return;
       }
 
@@ -49,7 +49,7 @@ var ALETHEIA = self.ALETHEIA || {};
       if (text.length < settings.minTextLength) {
         if (manual) {
           ALETHEIA.badge.showError(
-            "Text too short (" + text.length + " chars, need " + settings.minTextLength + ")"
+            ALETHEIA.t("textTooShort", [String(text.length), String(settings.minTextLength)])
           );
         }
         return;
@@ -71,11 +71,13 @@ var ALETHEIA = self.ALETHEIA || {};
             return;
           }
           if (!response) {
-            ALETHEIA.badge.showError("No response from service worker");
+            ALETHEIA.badge.showError(ALETHEIA.t("noServiceWorkerResponse"));
             return;
           }
           if (response.success) {
-            ALETHEIA.badge.showResult(response.data);
+            ALETHEIA.badge.showResult(response.data, {
+              showPercent: !!settings.showBadgePercent
+            });
           } else {
             ALETHEIA.badge.showError(response.error);
           }

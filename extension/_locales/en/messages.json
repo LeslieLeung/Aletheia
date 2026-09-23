@@ -1,0 +1,202 @@
+{
+  "extName": {
+    "message": "Aletheia – AI Text Detector",
+    "description": "Extension name in the browser toolbar and chrome://extensions."
+  },
+  "extDesc": {
+    "message": "Automatically detect AI-generated text on article pages.",
+    "description": "Extension description in chrome://extensions."
+  },
+  "appSubtitle": {
+    "message": "AI Text Detector"
+  },
+  "apiUrl": {
+    "message": "API URL"
+  },
+  "aiDetector": {
+    "message": "AI detector"
+  },
+  "contentType": {
+    "message": "Content type"
+  },
+  "off": {
+    "message": "Off"
+  },
+  "detectNow": {
+    "message": "Detect Now"
+  },
+  "settings": {
+    "message": "Settings"
+  },
+  "urlMustHttp": {
+    "message": "URL must use http or https"
+  },
+  "apiUrlSaved": {
+    "message": "API URL saved"
+  },
+  "invalidUrl": {
+    "message": "Invalid URL format"
+  },
+  "detecting": {
+    "message": "Detecting…"
+  },
+  "sendingDetect": {
+    "message": "Sending detect request to active tab…"
+  },
+  "noActiveTab": {
+    "message": "No active tab found"
+  },
+  "couldNotConnect": {
+    "message": "Could not connect to page. Try refreshing the page first."
+  },
+  "detectionTriggered": {
+    "message": "Detection triggered! Check the page for results."
+  },
+  "unexpectedResponse": {
+    "message": "Unexpected response from content script."
+  },
+  "optionsTitle": {
+    "message": "Aletheia Settings"
+  },
+  "optionsSubtitle": {
+    "message": "Configure the AI Text Detector extension."
+  },
+  "apiConnection": {
+    "message": "API Connection"
+  },
+  "testConnection": {
+    "message": "Test Connection"
+  },
+  "detection": {
+    "message": "Detection"
+  },
+  "contentTypeHint": {
+    "message": "Classify the page as original, repost, or ad. Off leaves the AI result unchanged."
+  },
+  "strategy": {
+    "message": "Strategy"
+  },
+  "strategyTruncate": {
+    "message": "Truncate"
+  },
+  "strategySlidingAvg": {
+    "message": "Sliding Average"
+  },
+  "strategyWeightedAvg": {
+    "message": "Weighted Average"
+  },
+  "strategySlidingVote": {
+    "message": "Sliding Vote"
+  },
+  "earlyStop": {
+    "message": "Early stop (skip remaining chunks when confidence is high)"
+  },
+  "showBadgePercent": {
+    "message": "Show percentage on the badge"
+  },
+  "minTextLength": {
+    "message": "Minimum text length (characters)"
+  },
+  "domainFiltering": {
+    "message": "Domain Filtering"
+  },
+  "domainHint": {
+    "message": "Whitelist takes priority: whitelisted domains are always detected, blacklisted domains are always skipped. One domain per line."
+  },
+  "whitelistLabel": {
+    "message": "Whitelist (always detect on these domains)"
+  },
+  "blacklistLabel": {
+    "message": "Blacklist (never detect on these domains)"
+  },
+  "saveSettings": {
+    "message": "Save Settings"
+  },
+  "resetDefaults": {
+    "message": "Reset to Defaults"
+  },
+  "enterApiUrl": {
+    "message": "Please enter an API URL"
+  },
+  "testing": {
+    "message": "Testing…"
+  },
+  "connectedOk": {
+    "message": "Connected successfully!"
+  },
+  "unexpectedApiResponse": {
+    "message": "Unexpected response: "
+  },
+  "connectionFailed": {
+    "message": "Connection failed: "
+  },
+  "settingsSaved": {
+    "message": "Settings saved!"
+  },
+  "confirmReset": {
+    "message": "Reset all settings to defaults?"
+  },
+  "settingsReset": {
+    "message": "Settings reset to defaults!"
+  },
+  "detectionResult": {
+    "message": "Detection Result"
+  },
+  "confidence": {
+    "message": "Confidence"
+  },
+  "content": {
+    "message": "Content"
+  },
+  "language": {
+    "message": "Language"
+  },
+  "model": {
+    "message": "Model"
+  },
+  "chunks": {
+    "message": "Chunks"
+  },
+  "detectionFailed": {
+    "message": "Detection failed"
+  },
+  "labelHuman": {
+    "message": "Human"
+  },
+  "labelAi": {
+    "message": "AI"
+  },
+  "contentOriginal": {
+    "message": "Original"
+  },
+  "contentRepost": {
+    "message": "Repost"
+  },
+  "contentAd": {
+    "message": "Ad"
+  },
+  "detectionDisabled": {
+    "message": "Detection is disabled. Enable it in the popup."
+  },
+  "noContentFound": {
+    "message": "No content found"
+  },
+  "textTooShort": {
+    "message": "Text too short ($1 chars, need $2)"
+  },
+  "noServiceWorkerResponse": {
+    "message": "No response from service worker"
+  },
+  "notAnArticle": {
+    "message": "Page does not appear to be an article"
+  },
+  "couldNotExtract": {
+    "message": "Could not extract article content"
+  },
+  "apiError": {
+    "message": "API error"
+  },
+  "networkError": {
+    "message": "Network error"
+  }
+}

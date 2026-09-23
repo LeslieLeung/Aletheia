@@ -24,7 +24,8 @@ ALETHEIA.DEFAULTS = Object.freeze({
     "spotify.com"
   ],
   enabled: true,
-  minTextLength: 200
+  minTextLength: 200,
+  showBadgePercent: false
 });
 
 ALETHEIA.MSG = Object.freeze({

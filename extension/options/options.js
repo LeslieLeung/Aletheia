@@ -1,4 +1,6 @@
 (function () {
+  ALETHEIA.applyI18n();
+
   var apiUrlEl = document.getElementById("apiUrl");
   var testBtn = document.getElementById("testBtn");
   var testStatus = document.getElementById("testStatus");
@@ -6,6 +8,7 @@
   var contentEngineEl = document.getElementById("contentEngine");
   var strategyEl = document.getElementById("strategy");
   var earlyStopEl = document.getElementById("earlyStop");
+  var showBadgePercentEl = document.getElementById("showBadgePercent");
   var minTextLengthEl = document.getElementById("minTextLength");
   var blacklistEl = document.getElementById("blacklist");
   var whitelistEl = document.getElementById("whitelist");
@@ -20,6 +23,7 @@
     contentEngineEl.value = s.contentEngine || ALETHEIA.DEFAULTS.contentEngine;
     strategyEl.value = s.strategy;
     earlyStopEl.checked = s.earlyStop;
+    showBadgePercentEl.checked = !!s.showBadgePercent;
     minTextLengthEl.value = s.minTextLength;
     blacklistEl.value = (s.blacklist || []).join("\n");
     whitelistEl.value = (s.whitelist || []).join("\n");
@@ -29,12 +33,12 @@
   testBtn.addEventListener("click", function () {
     var url = apiUrlEl.value.trim();
     if (!url) {
-      showTestStatus("Please enter an API URL", false);
+      showTestStatus(ALETHEIA.t("enterApiUrl"), false);
       return;
     }
 
     testBtn.disabled = true;
-    testBtn.textContent = "Testing\u2026";
+    testBtn.textContent = ALETHEIA.t("testing");
     testStatus.className = "test-status";
 
     fetch(url + "/health")
@@ -44,17 +48,17 @@
       })
       .then(function (data) {
         if (data.status === "ok") {
-          showTestStatus("Connected successfully!", true);
+          showTestStatus(ALETHEIA.t("connectedOk"), true);
         } else {
-          showTestStatus("Unexpected response: " + JSON.stringify(data), false);
+          showTestStatus(ALETHEIA.t("unexpectedApiResponse") + JSON.stringify(data), false);
         }
       })
       .catch(function (err) {
-        showTestStatus("Connection failed: " + err.message, false);
+        showTestStatus(ALETHEIA.t("connectionFailed") + err.message, false);
       })
       .finally(function () {
         testBtn.disabled = false;
-        testBtn.textContent = "Test Connection";
+        testBtn.textContent = ALETHEIA.t("testConnection");
       });
   });
 
@@ -78,13 +82,14 @@
       contentEngine: contentEngineEl.value,
       strategy: strategyEl.value,
       earlyStop: earlyStopEl.checked,
+      showBadgePercent: showBadgePercentEl.checked,
       minTextLength: parseInt(minTextLengthEl.value, 10) || ALETHEIA.DEFAULTS.minTextLength,
       blacklist: parseDomains(blacklistEl.value),
       whitelist: parseDomains(whitelistEl.value)
     };
 
     ALETHEIA.storage.set(data).then(function () {
-      saveStatus.textContent = "Settings saved!";
+      saveStatus.textContent = ALETHEIA.t("settingsSaved");
       saveStatus.className = "save-status show";
       setTimeout(function () {
         saveStatus.className = "save-status";
@@ -94,7 +99,7 @@
 
   // Reset to defaults
   resetBtn.addEventListener("click", function () {
-    if (!confirm("Reset all settings to defaults?")) return;
+    if (!confirm(ALETHEIA.t("confirmReset"))) return;
 
     var d = ALETHEIA.DEFAULTS;
     apiUrlEl.value = d.apiUrl;
@@ -102,6 +107,7 @@
     contentEngineEl.value = d.contentEngine;
     strategyEl.value = d.strategy;
     earlyStopEl.checked = d.earlyStop;
+    showBadgePercentEl.checked = d.showBadgePercent;
     minTextLengthEl.value = d.minTextLength;
     blacklistEl.value = d.blacklist.join("\n");
     whitelistEl.value = "";
@@ -112,12 +118,13 @@
       contentEngine: d.contentEngine,
       strategy: d.strategy,
       earlyStop: d.earlyStop,
+      showBadgePercent: d.showBadgePercent,
       minTextLength: d.minTextLength,
       blacklist: d.blacklist.slice(),
       whitelist: [],
       enabled: true
     }).then(function () {
-      saveStatus.textContent = "Settings reset to defaults!";
+      saveStatus.textContent = ALETHEIA.t("settingsReset");
       saveStatus.className = "save-status show";
       setTimeout(function () {
         saveStatus.className = "save-status";

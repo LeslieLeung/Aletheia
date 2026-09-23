@@ -1,4 +1,6 @@
 (function () {
+  ALETHEIA.applyI18n();
+
   var enabledEl = document.getElementById("enabled");
   var apiUrlEl = document.getElementById("apiUrl");
   var detectorEl = document.getElementById("detector");
@@ -36,13 +38,13 @@
       try {
         var parsed = new URL(url);
         if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-          showStatus("URL must use http or https", "error");
+          showStatus(ALETHEIA.t("urlMustHttp"), "error");
           return;
         }
         ALETHEIA.storage.set({ apiUrl: url });
-        showStatus("API URL saved", "success");
+        showStatus(ALETHEIA.t("apiUrlSaved"), "success");
       } catch (e) {
-        showStatus("Invalid URL format", "error");
+        showStatus(ALETHEIA.t("invalidUrl"), "error");
       }
     }
   });
@@ -50,12 +52,12 @@
   // Detect Now button
   detectBtn.addEventListener("click", function () {
     detectBtn.disabled = true;
-    detectBtn.textContent = "Detecting\u2026";
-    showStatus("Sending detect request to active tab\u2026", "info");
+    detectBtn.textContent = ALETHEIA.t("detecting");
+    showStatus(ALETHEIA.t("sendingDetect"), "info");
 
     chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
       if (!tabs[0]) {
-        showStatus("No active tab found", "error");
+        showStatus(ALETHEIA.t("noActiveTab"), "error");
         resetBtn();
         return;
       }
@@ -65,14 +67,11 @@
         { type: ALETHEIA.MSG.MANUAL_DETECT },
         function (response) {
           if (chrome.runtime.lastError) {
-            showStatus(
-              "Could not connect to page. Try refreshing the page first.",
-              "error"
-            );
+            showStatus(ALETHEIA.t("couldNotConnect"), "error");
           } else if (response && response.ok) {
-            showStatus("Detection triggered! Check the page for results.", "success");
+            showStatus(ALETHEIA.t("detectionTriggered"), "success");
           } else {
-            showStatus("Unexpected response from content script.", "error");
+            showStatus(ALETHEIA.t("unexpectedResponse"), "error");
           }
           resetBtn();
         }
@@ -93,6 +92,6 @@
 
   function resetBtn() {
     detectBtn.disabled = false;
-    detectBtn.textContent = "Detect Now";
+    detectBtn.textContent = ALETHEIA.t("detectNow");
   }
 })();
