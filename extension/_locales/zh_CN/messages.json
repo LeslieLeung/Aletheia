@@ -198,5 +198,71 @@
   },
   "networkError": {
     "message": "网络错误"
+  },
+  "detectSource": {
+    "message": "检测来源"
+  },
+  "modeServer": {
+    "message": "服务器"
+  },
+  "modeLocal": {
+    "message": "本地"
+  },
+  "modeServerHint": {
+    "message": "把页面发给你的 Aletheia API。"
+  },
+  "modeLocalHint": {
+    "message": "由扩展直接调用你的 Jev 服务。"
+  },
+  "localEngine": {
+    "message": "引擎"
+  },
+  "engineJevDesc": {
+    "message": "你的 Jev 服务"
+  },
+  "jevBaseUrl": {
+    "message": "Jev 服务器"
+  },
+  "jevBaseHint": {
+    "message": "API 根地址，例如 https://api.typesafe.ai。"
+  },
+  "jevApiKey": {
+    "message": "API key"
+  },
+  "jevKeyPlaceholder": {
+    "message": "API key"
+  },
+  "localContent": {
+    "message": "同时分类内容"
+  },
+  "localContentHint": {
+    "message": "用上面选中的引擎，把页面标成原创、搬运或广告。"
+  },
+  "strategyLocalNote": {
+    "message": "滑动窗口策略在通过服务器运行 Aletheia 时生效。"
+  },
+  "testJev": {
+    "message": "测试 Jev"
+  },
+  "missingJevKey": {
+    "message": "请填写 Jev API key"
+  },
+  "missingJevUrl": {
+    "message": "请填写 Jev 服务器地址"
+  },
+  "jevAuthFailed": {
+    "message": "Jev 拒绝了这个 API key"
+  },
+  "jevSaved": {
+    "message": "Jev 设置已保存"
+  },
+  "modeSaved": {
+    "message": "运行方式已保存"
+  },
+  "missingAiJudgment": {
+    "message": "模型没有返回 AI 判断"
+  },
+  "unsupportedLocalEngine": {
+    "message": "不支持的本地引擎"
   }
 }

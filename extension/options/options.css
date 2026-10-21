@@ -67,6 +67,7 @@ h1 {
 }
 
 input[type="text"],
+input[type="password"],
 input[type="number"],
 select,
 textarea {
@@ -183,4 +184,8 @@ button:hover {
 
 .save-status.show {
   display: block;
+}
+
+.save-status.fail {
+  color: #991b1b;
 }

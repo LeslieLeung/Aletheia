@@ -2,54 +2,33 @@
   ALETHEIA.applyI18n();
 
   var enabledEl = document.getElementById("enabled");
-  var apiUrlEl = document.getElementById("apiUrl");
-  var detectorEl = document.getElementById("detector");
-  var contentEngineEl = document.getElementById("contentEngine");
   var detectBtn = document.getElementById("detectBtn");
   var statusEl = document.getElementById("status");
   var optionsLink = document.getElementById("optionsLink");
 
-  // Load settings
   ALETHEIA.storage.get().then(function (settings) {
     enabledEl.checked = settings.enabled;
-    apiUrlEl.value = settings.apiUrl;
-    detectorEl.value = settings.detector;
-    contentEngineEl.value = settings.contentEngine || ALETHEIA.DEFAULTS.contentEngine;
+    ALETHEIA.connection.fill(settings);
   });
 
-  // Save enabled toggle
   enabledEl.addEventListener("change", function () {
     ALETHEIA.storage.set({ enabled: enabledEl.checked });
   });
 
-  // Save detector on change
-  detectorEl.addEventListener("change", function () {
-    ALETHEIA.storage.set({ detector: detectorEl.value });
-  });
-
-  contentEngineEl.addEventListener("change", function () {
-    ALETHEIA.storage.set({ contentEngine: contentEngineEl.value });
-  });
-
-  // Save API URL on blur
-  apiUrlEl.addEventListener("change", function () {
-    var url = apiUrlEl.value.trim();
-    if (url) {
-      try {
-        var parsed = new URL(url);
-        if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-          showStatus(ALETHEIA.t("urlMustHttp"), "error");
-          return;
-        }
-        ALETHEIA.storage.set({ apiUrl: url });
-        showStatus(ALETHEIA.t("apiUrlSaved"), "success");
-      } catch (e) {
-        showStatus(ALETHEIA.t("invalidUrl"), "error");
-      }
+  ALETHEIA.connection.bind(function (reason) {
+    var urlError = ALETHEIA.connection.activeUrlError();
+    if (urlError) {
+      showStatus(urlError, "error");
+      return;
     }
+    ALETHEIA.storage.set(ALETHEIA.connection.collect()).then(function () {
+      var notice = noticeFor(reason);
+      if (notice) showStatus(notice, "success");
+    }).catch(function (err) {
+      showStatus(err.message, "error");
+    });
   });
 
-  // Detect Now button
   detectBtn.addEventListener("click", function () {
     detectBtn.disabled = true;
     detectBtn.textContent = ALETHEIA.t("detecting");
@@ -79,11 +58,17 @@
     });
   });
 
-  // Options link
   optionsLink.addEventListener("click", function (e) {
     e.preventDefault();
     chrome.runtime.openOptionsPage();
   });
+
+  function noticeFor(reason) {
+    if (reason === "mode") return ALETHEIA.t("modeSaved");
+    if (reason === "apiUrl") return ALETHEIA.t("apiUrlSaved");
+    if (reason === "jevBaseUrl" || reason === "jevApiKey") return ALETHEIA.t("jevSaved");
+    return "";
+  }
 
   function showStatus(msg, type) {
     statusEl.textContent = msg;

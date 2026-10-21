@@ -2,6 +2,10 @@ var ALETHEIA = self.ALETHEIA || {};
 
 ALETHEIA.DEFAULTS = Object.freeze({
   apiUrl: "http://localhost:8000",
+  runMode: "server",
+  localEngine: "jev",
+  jevBaseUrl: "https://api.typesafe.ai",
+  localContent: false,
   strategy: "sliding_weighted_avg",
   earlyStop: true,
   detector: "onnx_classifier",

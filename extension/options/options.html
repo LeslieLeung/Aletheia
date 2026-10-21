@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <title data-i18n="optionsTitle">Aletheia Settings</title>
 <link rel="stylesheet" href="options.css">
+<link rel="stylesheet" href="../shared/connection.css">
 </head>
 <body>
   <div class="container">
@@ -11,50 +12,91 @@
     <p class="sub" data-i18n="optionsSubtitle">Configure the AI Text Detector extension.</p>
 
     <div class="card">
-      <h2 data-i18n="apiConnection">API Connection</h2>
-      <div class="field">
-        <label for="apiUrl" data-i18n="apiUrl">API URL</label>
-        <div class="input-row">
-          <input type="text" id="apiUrl" placeholder="http://localhost:8000">
-          <button id="testBtn" class="btn-secondary" data-i18n="testConnection">Test Connection</button>
+      <h2 data-i18n="detectSource">Detection source</h2>
+      <div class="mode-switch" id="modeSwitch" role="group">
+        <button type="button" id="modeServer" data-i18n="modeServer" aria-pressed="true">Server</button>
+        <button type="button" id="modeLocal" data-i18n="modeLocal" aria-pressed="false">Local</button>
+      </div>
+      <p class="field-hint mode-hint" id="modeHint"></p>
+
+      <div id="serverFields">
+        <div class="field">
+          <label for="apiUrl" data-i18n="apiUrl">API URL</label>
+          <input type="text" id="apiUrl" placeholder="http://localhost:8000" spellcheck="false">
         </div>
+        <div class="field">
+          <label for="detector" data-i18n="aiDetector">AI detector</label>
+          <select id="detector">
+            <option value="onnx_classifier">AIGC Detector</option>
+            <option value="diveye">DivEye</option>
+            <option value="jev">Jev</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="contentEngine" data-i18n="contentType">Content type</label>
+          <select id="contentEngine">
+            <option value="off" data-i18n="off">Off</option>
+            <option value="jev">Jev</option>
+          </select>
+          <p class="field-hint" data-i18n="contentTypeHint">Classify the page as original, repost, or ad. Off leaves the AI result unchanged.</p>
+        </div>
+      </div>
+
+      <div id="localFields" hidden>
+        <div class="field">
+          <label data-i18n="localEngine">Engine</label>
+          <div class="engine-grid">
+            <label class="engine-card">
+              <input type="radio" name="localEngine" id="engineJev" value="jev" checked>
+              <span class="engine-name">Jev</span>
+              <span class="engine-desc" data-i18n="engineJevDesc">Your Jev server</span>
+            </label>
+          </div>
+        </div>
+        <div class="field extra-fields" id="jevFields">
+          <div class="stack-field">
+            <label for="jevBaseUrl" data-i18n="jevBaseUrl">Jev server</label>
+            <input type="text" id="jevBaseUrl" placeholder="https://api.typesafe.ai" spellcheck="false">
+            <p class="field-hint" data-i18n="jevBaseHint">API root, for example https://api.typesafe.ai.</p>
+          </div>
+          <div class="stack-field">
+            <label for="jevApiKey" data-i18n="jevApiKey">API key</label>
+            <input type="password" id="jevApiKey" autocomplete="off" spellcheck="false" data-i18n-placeholder="jevKeyPlaceholder">
+          </div>
+        </div>
+        <label class="check-label local-content">
+          <input type="checkbox" id="localContent">
+          <span data-i18n="localContent">Classify content</span>
+        </label>
+        <p class="field-hint" data-i18n="localContentHint">Also label the page as original, repost, or ad, using the engine selected above.</p>
+      </div>
+
+      <div class="field" id="testRow">
+        <button type="button" id="testBtn" class="btn-secondary" data-i18n="testConnection">Test Connection</button>
         <div id="testStatus" class="test-status"></div>
       </div>
     </div>
 
     <div class="card">
       <h2 data-i18n="detection">Detection</h2>
-      <div class="field">
-        <label for="detector" data-i18n="aiDetector">AI detector</label>
-        <select id="detector">
-          <option value="onnx_classifier">AIGC Detector</option>
-          <option value="diveye">DivEye</option>
-          <option value="jev">Jev</option>
-        </select>
+      <div id="serverStrategy">
+        <div class="field">
+          <label for="strategy" data-i18n="strategy">Strategy</label>
+          <select id="strategy">
+            <option value="truncate" data-i18n="strategyTruncate">Truncate</option>
+            <option value="sliding_avg" data-i18n="strategySlidingAvg">Sliding Average</option>
+            <option value="sliding_weighted_avg" data-i18n="strategyWeightedAvg">Weighted Average</option>
+            <option value="sliding_vote" data-i18n="strategySlidingVote">Sliding Vote</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="check-label">
+            <input type="checkbox" id="earlyStop">
+            <span data-i18n="earlyStop">Early stop (skip remaining chunks when confidence is high)</span>
+          </label>
+        </div>
       </div>
-      <div class="field">
-        <label for="contentEngine" data-i18n="contentType">Content type</label>
-        <select id="contentEngine">
-          <option value="off" data-i18n="off">Off</option>
-          <option value="jev">Jev</option>
-        </select>
-        <p class="field-hint" data-i18n="contentTypeHint">Classify the page as original, repost, or ad. Off leaves the AI result unchanged.</p>
-      </div>
-      <div class="field">
-        <label for="strategy" data-i18n="strategy">Strategy</label>
-        <select id="strategy">
-          <option value="truncate" data-i18n="strategyTruncate">Truncate</option>
-          <option value="sliding_avg" data-i18n="strategySlidingAvg">Sliding Average</option>
-          <option value="sliding_weighted_avg" data-i18n="strategyWeightedAvg">Weighted Average</option>
-          <option value="sliding_vote" data-i18n="strategySlidingVote">Sliding Vote</option>
-        </select>
-      </div>
-      <div class="field">
-        <label class="check-label">
-          <input type="checkbox" id="earlyStop">
-          <span data-i18n="earlyStop">Early stop (skip remaining chunks when confidence is high)</span>
-        </label>
-      </div>
+      <p class="field-hint" id="strategyLocalNote" hidden data-i18n="strategyLocalNote"></p>
       <div class="field">
         <label class="check-label">
           <input type="checkbox" id="showBadgePercent">
@@ -81,8 +123,8 @@
     </div>
 
     <div class="actions">
-      <button id="saveBtn" data-i18n="saveSettings">Save Settings</button>
-      <button id="resetBtn" class="btn-secondary" data-i18n="resetDefaults">Reset to Defaults</button>
+      <button type="button" id="saveBtn" data-i18n="saveSettings">Save Settings</button>
+      <button type="button" id="resetBtn" class="btn-secondary" data-i18n="resetDefaults">Reset to Defaults</button>
     </div>
 
     <div id="saveStatus" class="save-status"></div>
@@ -91,6 +133,9 @@
   <script src="../shared/constants.js"></script>
   <script src="../shared/storage.js"></script>
   <script src="../shared/i18n.js"></script>
+  <script src="../shared/questions.js"></script>
+  <script src="../shared/jev.js"></script>
+  <script src="../shared/connection-form.js"></script>
   <script src="options.js"></script>
 </body>
 </html>

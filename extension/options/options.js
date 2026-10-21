@@ -1,11 +1,8 @@
 (function () {
   ALETHEIA.applyI18n();
 
-  var apiUrlEl = document.getElementById("apiUrl");
   var testBtn = document.getElementById("testBtn");
   var testStatus = document.getElementById("testStatus");
-  var detectorEl = document.getElementById("detector");
-  var contentEngineEl = document.getElementById("contentEngine");
   var strategyEl = document.getElementById("strategy");
   var earlyStopEl = document.getElementById("earlyStop");
   var showBadgePercentEl = document.getElementById("showBadgePercent");
@@ -16,11 +13,8 @@
   var resetBtn = document.getElementById("resetBtn");
   var saveStatus = document.getElementById("saveStatus");
 
-  // Load current settings
   ALETHEIA.storage.get().then(function (s) {
-    apiUrlEl.value = s.apiUrl;
-    detectorEl.value = s.detector;
-    contentEngineEl.value = s.contentEngine || ALETHEIA.DEFAULTS.contentEngine;
+    ALETHEIA.connection.fill(s);
     strategyEl.value = s.strategy;
     earlyStopEl.checked = s.earlyStop;
     showBadgePercentEl.checked = !!s.showBadgePercent;
@@ -29,11 +23,16 @@
     whitelistEl.value = (s.whitelist || []).join("\n");
   });
 
-  // Test connection
+  ALETHEIA.connection.bind(null);
+
   testBtn.addEventListener("click", function () {
-    var url = apiUrlEl.value.trim();
-    if (!url) {
+    if (ALETHEIA.connection.mode() === "server" && !document.getElementById("apiUrl").value.trim()) {
       showTestStatus(ALETHEIA.t("enterApiUrl"), false);
+      return;
+    }
+    var urlError = ALETHEIA.connection.activeUrlError();
+    if (urlError) {
+      showTestStatus(urlError, false);
       return;
     }
 
@@ -41,26 +40,39 @@
     testBtn.textContent = ALETHEIA.t("testing");
     testStatus.className = "test-status";
 
-    fetch(url + "/health")
-      .then(function (r) {
-        if (!r.ok) throw new Error("HTTP " + r.status);
-        return r.json();
-      })
-      .then(function (data) {
-        if (data.status === "ok") {
-          showTestStatus(ALETHEIA.t("connectedOk"), true);
-        } else {
-          showTestStatus(ALETHEIA.t("unexpectedApiResponse") + JSON.stringify(data), false);
-        }
-      })
-      .catch(function (err) {
-        showTestStatus(ALETHEIA.t("connectionFailed") + err.message, false);
-      })
-      .finally(function () {
-        testBtn.disabled = false;
-        testBtn.textContent = ALETHEIA.t("testConnection");
-      });
+    var pending;
+    if (ALETHEIA.connection.mode() === "local" && ALETHEIA.connection.engine() === "jev") {
+      pending = ALETHEIA.jev.test(
+        document.getElementById("jevBaseUrl").value.trim(),
+        document.getElementById("jevApiKey").value.trim()
+      );
+    } else if (ALETHEIA.connection.mode() === "local") {
+      pending = Promise.reject(new Error(ALETHEIA.t("unsupportedLocalEngine")));
+    } else {
+      pending = testServer(document.getElementById("apiUrl").value.trim());
+    }
+
+    pending.then(function () {
+      showTestStatus(ALETHEIA.t("connectedOk"), true);
+    }).catch(function (err) {
+      showTestStatus(ALETHEIA.t("connectionFailed") + err.message, false);
+    }).finally(function () {
+      testBtn.disabled = false;
+      ALETHEIA.connection.applyVisibility();
+    });
   });
+
+  function testServer(url) {
+    if (!url) return Promise.reject(new Error(ALETHEIA.t("enterApiUrl")));
+    return fetch(url + "/health").then(function (response) {
+      if (!response.ok) throw new Error("HTTP " + response.status);
+      return response.json();
+    }).then(function (data) {
+      if (data.status !== "ok") {
+        throw new Error(ALETHEIA.t("unexpectedApiResponse") + JSON.stringify(data));
+      }
+    });
+  }
 
   function showTestStatus(msg, ok) {
     testStatus.textContent = msg;
@@ -74,37 +86,50 @@
       .filter(function (d) { return d.length > 0; });
   }
 
-  // Save settings
+  function flashSave(message, failed) {
+    saveStatus.textContent = message;
+    saveStatus.className = "save-status show" + (failed ? " fail" : "");
+    setTimeout(function () {
+      saveStatus.className = "save-status";
+    }, 2000);
+  }
+
   saveBtn.addEventListener("click", function () {
-    var data = {
-      apiUrl: apiUrlEl.value.trim() || ALETHEIA.DEFAULTS.apiUrl,
-      detector: detectorEl.value,
-      contentEngine: contentEngineEl.value,
-      strategy: strategyEl.value,
-      earlyStop: earlyStopEl.checked,
-      showBadgePercent: showBadgePercentEl.checked,
-      minTextLength: parseInt(minTextLengthEl.value, 10) || ALETHEIA.DEFAULTS.minTextLength,
-      blacklist: parseDomains(blacklistEl.value),
-      whitelist: parseDomains(whitelistEl.value)
-    };
+    var urlError = ALETHEIA.connection.activeUrlError();
+    if (urlError) {
+      flashSave(urlError, true);
+      return;
+    }
+
+    var data = ALETHEIA.connection.collect();
+    data.strategy = strategyEl.value;
+    data.earlyStop = earlyStopEl.checked;
+    data.showBadgePercent = showBadgePercentEl.checked;
+    data.minTextLength = parseInt(minTextLengthEl.value, 10) || ALETHEIA.DEFAULTS.minTextLength;
+    data.blacklist = parseDomains(blacklistEl.value);
+    data.whitelist = parseDomains(whitelistEl.value);
 
     ALETHEIA.storage.set(data).then(function () {
-      saveStatus.textContent = ALETHEIA.t("settingsSaved");
-      saveStatus.className = "save-status show";
-      setTimeout(function () {
-        saveStatus.className = "save-status";
-      }, 2000);
+      flashSave(ALETHEIA.t("settingsSaved"), false);
+    }).catch(function (err) {
+      flashSave(err.message, true);
     });
   });
 
-  // Reset to defaults
   resetBtn.addEventListener("click", function () {
     if (!confirm(ALETHEIA.t("confirmReset"))) return;
 
     var d = ALETHEIA.DEFAULTS;
-    apiUrlEl.value = d.apiUrl;
-    detectorEl.value = d.detector;
-    contentEngineEl.value = d.contentEngine;
+    ALETHEIA.connection.fill({
+      apiUrl: d.apiUrl,
+      runMode: d.runMode,
+      localEngine: d.localEngine,
+      jevBaseUrl: d.jevBaseUrl,
+      jevApiKey: "",
+      localContent: d.localContent,
+      detector: d.detector,
+      contentEngine: d.contentEngine
+    });
     strategyEl.value = d.strategy;
     earlyStopEl.checked = d.earlyStop;
     showBadgePercentEl.checked = d.showBadgePercent;
@@ -114,6 +139,11 @@
 
     ALETHEIA.storage.set({
       apiUrl: d.apiUrl,
+      runMode: d.runMode,
+      localEngine: d.localEngine,
+      jevBaseUrl: d.jevBaseUrl,
+      jevApiKey: "",
+      localContent: d.localContent,
       detector: d.detector,
       contentEngine: d.contentEngine,
       strategy: d.strategy,
@@ -124,11 +154,7 @@
       whitelist: [],
       enabled: true
     }).then(function () {
-      saveStatus.textContent = ALETHEIA.t("settingsReset");
-      saveStatus.className = "save-status show";
-      setTimeout(function () {
-        saveStatus.className = "save-status";
-      }, 2000);
+      flashSave(ALETHEIA.t("settingsReset"), false);
     });
   });
 })();

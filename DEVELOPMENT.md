@@ -84,6 +84,8 @@ To add another decision engine, implement `DecisionEngine.judge(state, *, includ
 
 ## Chrome extension
 
-The extension source is in [`extension/`](extension/). The content script extracts article text, the background service worker sends requests to `/detect`, and the badge displays the AI result and optional content category. Settings are stored in Chrome extension storage. The content engine defaults to `off`.
+The extension source is in [`extension/`](extension/). The content script extracts article text, the background service worker sends requests, and the badge displays the AI result and optional content category. Settings are stored in Chrome extension storage. The content engine defaults to `off`.
 
-The extension can select a detector and content engine independently. When Jev is selected for both, the API combines the judgments into one engine call.
+Server mode posts to the configured Aletheia `/detect` endpoint. The extension can select a detector and content engine independently. When Jev is selected for both, the API combines the judgments into one engine call.
+
+Local mode skips the Aletheia API and routes through the selected local engine. The extension currently supports Jev, calling the configured server's `POST /v1/systemone` with the API key kept in `chrome.storage.local`. The shared question and response helpers in `extension/shared/questions.js` provide the common contract for additional engines.

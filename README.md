@@ -36,8 +36,8 @@ The content categories are `original` (first-hand writing), `repost` (copied or 
 
 1. Download the latest `aletheia-extension-*.zip` from [Releases](https://github.com/LeslieLeung/Aletheia/releases) and unzip it.
 2. Open `chrome://extensions`, enable **Developer mode**, then choose **Load unpacked** and select the unzipped folder.
-3. Click the Aletheia icon and set **API URL** to your running service. The default is `http://localhost:8000`.
-4. Select an **AI detector**. Set **Content type** to **Jev** if you also want the original/repost/ad category; content classification is off by default.
+3. Click the Aletheia icon. The default **Server** mode sends text to your Aletheia API: set **API URL** to the running service (`http://localhost:8000` by default) and choose an **AI detector**. Set **Content type** to **Jev** to also show original, repost, or ad; content classification is off by default.
+4. Switch to **Local** mode to use **Jev** directly from the extension. Enter your Jev server URL and API key.
 
 The extension checks eligible article pages automatically and shows the result in a floating badge. Click the badge for details, or click **Detect Now** in the popup to check the current page manually. In **Settings**, you can adjust the detection strategy, minimum text length, and domain lists.
 

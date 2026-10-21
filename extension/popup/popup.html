@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <link rel="stylesheet" href="popup.css">
+<link rel="stylesheet" href="../shared/connection.css">
 </head>
 <body>
   <div class="header">
@@ -14,29 +15,62 @@
   </div>
   <p class="sub" data-i18n="appSubtitle">AI Text Detector</p>
 
-  <div class="section">
-    <label for="apiUrl" data-i18n="apiUrl">API URL</label>
-    <input type="text" id="apiUrl" placeholder="http://localhost:8000">
+  <div class="mode-switch" id="modeSwitch" role="group">
+    <button type="button" id="modeServer" data-i18n="modeServer" aria-pressed="true">Server</button>
+    <button type="button" id="modeLocal" data-i18n="modeLocal" aria-pressed="false">Local</button>
+  </div>
+  <p class="mode-hint" id="modeHint"></p>
+
+  <div id="serverFields">
+    <div class="section">
+      <label for="apiUrl" data-i18n="apiUrl">API URL</label>
+      <input type="text" id="apiUrl" placeholder="http://localhost:8000" spellcheck="false">
+    </div>
+    <div class="section">
+      <label for="detector" data-i18n="aiDetector">AI detector</label>
+      <select id="detector">
+        <option value="onnx_classifier">AIGC Detector</option>
+        <option value="diveye">DivEye</option>
+        <option value="jev">Jev</option>
+      </select>
+    </div>
+    <div class="section">
+      <label for="contentEngine" data-i18n="contentType">Content type</label>
+      <select id="contentEngine">
+        <option value="off" data-i18n="off">Off</option>
+        <option value="jev">Jev</option>
+      </select>
+    </div>
   </div>
 
-  <div class="section">
-    <label for="detector" data-i18n="aiDetector">AI detector</label>
-    <select id="detector">
-      <option value="onnx_classifier">AIGC Detector</option>
-      <option value="diveye">DivEye</option>
-      <option value="jev">Jev</option>
-    </select>
+  <div id="localFields" hidden>
+    <div class="section">
+      <label data-i18n="localEngine">Engine</label>
+      <div class="engine-grid">
+        <label class="engine-card">
+          <input type="radio" name="localEngine" id="engineJev" value="jev" checked>
+          <span class="engine-name">Jev</span>
+          <span class="engine-desc" data-i18n="engineJevDesc">Your Jev server</span>
+        </label>
+      </div>
+    </div>
+    <div class="section extra-fields" id="jevFields">
+      <div class="stack-field">
+        <label for="jevBaseUrl" data-i18n="jevBaseUrl">Jev server</label>
+        <input type="text" id="jevBaseUrl" placeholder="https://api.typesafe.ai" spellcheck="false">
+      </div>
+      <div class="stack-field">
+        <label for="jevApiKey" data-i18n="jevApiKey">API key</label>
+        <input type="password" id="jevApiKey" autocomplete="off" spellcheck="false" data-i18n-placeholder="jevKeyPlaceholder">
+      </div>
+    </div>
+    <label class="check-label local-content">
+      <input type="checkbox" id="localContent">
+      <span data-i18n="localContent">Classify content</span>
+    </label>
   </div>
 
-  <div class="section">
-    <label for="contentEngine" data-i18n="contentType">Content type</label>
-    <select id="contentEngine">
-      <option value="off" data-i18n="off">Off</option>
-      <option value="jev">Jev</option>
-    </select>
-  </div>
-
-  <button id="detectBtn" data-i18n="detectNow">Detect Now</button>
+  <button type="button" id="detectBtn" data-i18n="detectNow">Detect Now</button>
 
   <div id="status" class="status"></div>
 
@@ -47,6 +81,7 @@
   <script src="../shared/constants.js"></script>
   <script src="../shared/storage.js"></script>
   <script src="../shared/i18n.js"></script>
+  <script src="../shared/connection-form.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

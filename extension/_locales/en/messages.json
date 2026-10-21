@@ -198,5 +198,71 @@
   },
   "networkError": {
     "message": "Network error"
+  },
+  "detectSource": {
+    "message": "Detection source"
+  },
+  "modeServer": {
+    "message": "Server"
+  },
+  "modeLocal": {
+    "message": "Local"
+  },
+  "modeServerHint": {
+    "message": "Send the page to your Aletheia API."
+  },
+  "modeLocalHint": {
+    "message": "Use your Jev server directly from this extension."
+  },
+  "localEngine": {
+    "message": "Engine"
+  },
+  "engineJevDesc": {
+    "message": "Your Jev server"
+  },
+  "jevBaseUrl": {
+    "message": "Jev server"
+  },
+  "jevBaseHint": {
+    "message": "API root, for example https://api.typesafe.ai."
+  },
+  "jevApiKey": {
+    "message": "API key"
+  },
+  "jevKeyPlaceholder": {
+    "message": "API key"
+  },
+  "localContent": {
+    "message": "Classify content"
+  },
+  "localContentHint": {
+    "message": "Also label the page as original, repost, or ad, using the engine selected above."
+  },
+  "strategyLocalNote": {
+    "message": "Sliding-window strategy applies when Aletheia is running on a server."
+  },
+  "testJev": {
+    "message": "Test Jev"
+  },
+  "missingJevKey": {
+    "message": "Enter the Jev API key"
+  },
+  "missingJevUrl": {
+    "message": "Enter the Jev server URL"
+  },
+  "jevAuthFailed": {
+    "message": "Jev rejected the API key"
+  },
+  "jevSaved": {
+    "message": "Jev settings saved"
+  },
+  "modeSaved": {
+    "message": "Run mode saved"
+  },
+  "missingAiJudgment": {
+    "message": "The model did not return an AI judgment"
+  },
+  "unsupportedLocalEngine": {
+    "message": "Unsupported local engine"
   }
 }
