@@ -26,7 +26,7 @@ var ALETHEIA = self.ALETHEIA || {};
     return true;
   }
 
-  // manual=true: skip domain filter, skip readability pre-check, show errors
+  // manual=true: skip the domain filter and the article gate, and show errors
   function runDetection(forceRerun, manual) {
     if (detected && !forceRerun) return;
 
