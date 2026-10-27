@@ -3,85 +3,69 @@
 <head>
 <meta charset="utf-8">
 <link rel="stylesheet" href="popup.css">
-<link rel="stylesheet" href="../shared/connection.css">
 </head>
 <body>
-  <div class="header">
-    <h1>Aletheia</h1>
-    <label class="toggle">
-      <input type="checkbox" id="enabled">
+  <header class="header">
+    <img class="logo" src="../icons/icon48.png" alt="" width="32" height="32">
+    <div class="brand">
+      <h1>Aletheia</h1>
+      <p class="sub" id="enabledState" data-i18n="appSubtitle">AI Text Detector</p>
+    </div>
+    <label class="toggle" data-i18n-title="autoDetect">
+      <input type="checkbox" id="enabled" aria-labelledby="enabledState">
       <span class="slider"></span>
     </label>
-  </div>
-  <p class="sub" data-i18n="appSubtitle">AI Text Detector</p>
+  </header>
 
-  <div class="mode-switch" id="modeSwitch" role="group">
-    <button type="button" id="modeServer" data-i18n="modeServer" aria-pressed="true">Server</button>
-    <button type="button" id="modeLocal" data-i18n="modeLocal" aria-pressed="false">Local</button>
-  </div>
-  <p class="mode-hint" id="modeHint"></p>
-
-  <div id="serverFields">
-    <div class="section">
-      <label for="apiUrl" data-i18n="apiUrl">API URL</label>
-      <input type="text" id="apiUrl" placeholder="http://localhost:8000" spellcheck="false">
-    </div>
-    <div class="section">
-      <label for="detector" data-i18n="aiDetector">AI detector</label>
-      <select id="detector">
-        <option value="onnx_classifier">AIGC Detector</option>
-        <option value="diveye">DivEye</option>
-        <option value="jev">Jev</option>
-      </select>
-    </div>
-    <div class="section">
-      <label for="contentEngine" data-i18n="contentType">Content type</label>
-      <select id="contentEngine">
-        <option value="off" data-i18n="off">Off</option>
-        <option value="jev">Jev</option>
-      </select>
-    </div>
+  <div class="setup-hint" id="setupHint" hidden>
+    <p data-i18n="setupRequired">Set your Jev server and API key in Settings first.</p>
+    <button type="button" class="link-btn" id="setupLink" data-i18n="openSettings">Open Settings</button>
   </div>
 
-  <div id="localFields" hidden>
-    <div class="section">
-      <label data-i18n="localEngine">Engine</label>
-      <div class="engine-grid">
-        <label class="engine-card">
-          <input type="radio" name="localEngine" id="engineJev" value="jev" checked>
-          <span class="engine-name">Jev</span>
-          <span class="engine-desc" data-i18n="engineJevDesc">Your Jev server</span>
-        </label>
+  <main class="body">
+    <section class="site-rule" id="siteRule" hidden>
+      <div class="site-rule-head">
+        <img class="favicon" id="siteFavicon" alt="" width="16" height="16" hidden>
+        <span class="site-rule-domain" id="siteDomain"></span>
       </div>
-    </div>
-    <div class="section extra-fields" id="jevFields">
-      <div class="stack-field">
-        <label for="jevBaseUrl" data-i18n="jevBaseUrl">Jev server</label>
-        <input type="text" id="jevBaseUrl" placeholder="https://api.typesafe.ai" spellcheck="false">
+      <div class="segmented" role="group" aria-labelledby="siteDomain">
+        <button type="button" class="seg" id="defaultSiteBtn" data-i18n="siteAuto">Auto</button>
+        <button type="button" class="seg" id="allowSiteBtn" data-i18n="allowSite">Always detect</button>
+        <button type="button" class="seg" id="blockSiteBtn" data-i18n="blockSite">Never detect</button>
       </div>
-      <div class="stack-field">
-        <label for="jevApiKey" data-i18n="jevApiKey">API key</label>
-        <input type="password" id="jevApiKey" autocomplete="off" spellcheck="false" data-i18n-placeholder="jevKeyPlaceholder">
-      </div>
-    </div>
-    <label class="check-label local-content">
-      <input type="checkbox" id="localContent">
-      <span data-i18n="localContent">Classify content</span>
+    </section>
+
+    <label class="option-row">
+      <span class="option-copy">
+        <span class="option-title" id="localContentLabel" data-i18n="localContent">Classify content</span>
+        <span class="option-desc" data-i18n="localContentHint">Also label the page with your content categories.</span>
+      </span>
+      <span class="toggle">
+        <input type="checkbox" id="localContent" aria-labelledby="localContentLabel">
+        <span class="slider"></span>
+      </span>
     </label>
-  </div>
 
-  <button type="button" id="detectBtn" data-i18n="detectNow">Detect Now</button>
+    <button type="button" class="primary" id="detectBtn">
+      <span class="btn-spinner" aria-hidden="true"></span>
+      <span class="btn-label" id="detectLabel" data-i18n="detectNow">Detect Now</span>
+    </button>
 
-  <div id="status" class="status"></div>
+    <div id="status" class="status" role="status" aria-live="polite"></div>
+  </main>
 
-  <div class="footer">
-    <a href="#" id="optionsLink" data-i18n="settings">Settings</a>
-  </div>
+  <footer class="footer">
+    <button type="button" class="link-btn" id="optionsLink">
+      <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94a7.07 7.07 0 0 0 0-1.88l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7 7 0 0 0-1.63-.94l-.36-2.54A.5.5 0 0 0 13.9 2h-3.8a.5.5 0 0 0-.49.42l-.36 2.54c-.58.24-1.13.55-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.71 8.48a.5.5 0 0 0 .12.64l2.03 1.58a7.07 7.07 0 0 0 0 1.88l-2.03 1.58a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.3.6.22l2.39-.96c.5.39 1.05.7 1.63.94l.36 2.54c.05.24.25.42.49.42h3.8c.24 0 .45-.18.49-.42l.36-2.54c.58-.24 1.13-.55 1.63-.94l2.39.96c.22.08.48 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg>
+      <span data-i18n="settings">Settings</span>
+    </button>
+    <span class="version" id="version"></span>
+  </footer>
 
   <script src="../shared/constants.js"></script>
+  <script src="../shared/domains.js"></script>
   <script src="../shared/storage.js"></script>
   <script src="../shared/i18n.js"></script>
-  <script src="../shared/connection-form.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

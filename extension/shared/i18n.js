@@ -24,6 +24,13 @@ ALETHEIA.applyI18n = function (root) {
     );
   }
 
+  var titles = scope.querySelectorAll("[data-i18n-title]");
+  for (i = 0; i < titles.length; i++) {
+    var title = ALETHEIA.t(titles[i].getAttribute("data-i18n-title"));
+    titles[i].setAttribute("title", title);
+    titles[i].setAttribute("aria-label", title);
+  }
+
   if (document.documentElement && chrome.i18n && chrome.i18n.getUILanguage) {
     var ui = chrome.i18n.getUILanguage().toLowerCase();
     document.documentElement.lang = ui.indexOf("zh") === 0 ? "zh-CN" : ui || "en";

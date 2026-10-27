@@ -14,7 +14,6 @@ ALETHEIA.storage = {
   get: function () {
     return new Promise(function (resolve) {
       chrome.storage.sync.get(ALETHEIA.DEFAULTS, function (items) {
-        if (items.localEngine !== "jev") items.localEngine = ALETHEIA.DEFAULTS.localEngine;
         chrome.storage.local.get({ jevApiKey: "" }, function (localItems) {
           items.jevApiKey = localItems.jevApiKey || "";
           resolve(items);

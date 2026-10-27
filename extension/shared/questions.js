@@ -2,6 +2,7 @@ var ALETHEIA = globalThis.ALETHEIA || {};
 
 ALETHEIA.questions = (function () {
   var TEXT_BUDGET = 6000;
+  var MAX_CATEGORIES = 10;
 
   var aiGenerated = Object.freeze({
     type: "noul",
@@ -12,20 +13,99 @@ ALETHEIA.questions = (function () {
     })
   });
 
-  var contentType = Object.freeze({
-    type: "choice",
-    instructions: "Classify this page into exactly one category: original writing, reposted content, or an advertisement.",
-    criteria: Object.freeze({
-      original: "原创: first-hand writing with the author's own reporting, experience, or analysis.",
-      repost: "搬运: copied, aggregated, or lightly rewritten from another source, with little original reporting.",
-      ad: "广告: promotional content. Includes 软广 (reads like an article or review but promotes a brand, product, or service) and 硬广 (explicit sales pitch, price, coupon, or purchase call-to-action)."
+  // Built-in categories. Labels follow the UI language; descriptions are the
+  // exact wording sent to Jev.
+  var DEFAULT_CATEGORIES = Object.freeze([
+    Object.freeze({
+      id: "original",
+      labelKey: "contentOriginal",
+      description: "first-hand writing with the author's own reporting, experience, or analysis."
+    }),
+    Object.freeze({
+      id: "repost",
+      labelKey: "contentRepost",
+      description: "copied, aggregated, or lightly rewritten from another source, with little original reporting."
+    }),
+    Object.freeze({
+      id: "ad",
+      labelKey: "contentAd",
+      description: "promotional content. Includes 软广 (reads like an article or review but promotes a brand, product, or service) and 硬广 (explicit sales pitch, price, coupon, or purchase call-to-action)."
     })
-  });
+  ]);
 
-  function guessLang(text) {
-    var sample = String(text || "").slice(0, 2000);
-    var cjk = sample.match(/[\u4e00-\u9fff]/g);
-    return cjk && cjk.length >= 8 ? "zh" : "en";
+  function defaultContentCategories() {
+    return DEFAULT_CATEGORIES.map(function (category) {
+      return {
+        id: category.id,
+        label: ALETHEIA.t(category.labelKey),
+        description: category.description
+      };
+    });
+  }
+
+  function nextCategoryId(categories) {
+    var used = {};
+    var i;
+    for (i = 0; i < categories.length; i++) used[categories[i].id] = true;
+    var n = 1;
+    while (used["category_" + n]) n++;
+    return "category_" + n;
+  }
+
+  function sanitizeCategories(raw) {
+    if (!Array.isArray(raw) || raw.length === 0) return defaultContentCategories();
+
+    var used = {};
+    var categories = [];
+    raw.slice(0, MAX_CATEGORIES).forEach(function (item) {
+      var label = String((item && item.label) || "").trim();
+      if (!label) return;
+      var id = String((item && item.id) || "").trim();
+      if (!id || used[id]) id = nextCategoryId(categories);
+      used[id] = true;
+      categories.push({
+        id: id,
+        label: label,
+        description: String((item && item.description) || "").trim()
+      });
+    });
+
+    return categories.length ? categories : defaultContentCategories();
+  }
+
+  function categoriesFrom(settings) {
+    return sanitizeCategories(settings && settings.contentCategories);
+  }
+
+  function joinLabels(labels) {
+    if (labels.length <= 1) return labels[0] || "";
+    return labels.slice(0, -1).join(", ") + ", or " + labels[labels.length - 1];
+  }
+
+  // Renders the user's categories into the Jev choice question. The criteria
+  // keys are the stored category ids; the values are the prompt text.
+  function contentTypeFor(categories) {
+    var criteria = {};
+    var labels = [];
+    (categories || []).forEach(function (category) {
+      var label = String((category && category.label) || "").trim();
+      if (!label) return;
+      var id = String(category.id || "").trim() || label;
+      var description = String(category.description || "").trim();
+      criteria[id] = description ? label + ": " + description : label;
+      labels.push(label);
+    });
+
+    var instructions = "Classify this page into exactly one category.";
+    if (labels.length) {
+      instructions = "Classify this page into exactly one category: " + joinLabels(labels) + ".";
+    }
+
+    return {
+      type: "choice",
+      instructions: instructions,
+      criteria: criteria
+    };
   }
 
   function buildState(message) {
@@ -39,8 +119,18 @@ ALETHEIA.questions = (function () {
 
   function forSettings(settings) {
     var questions = { ai_generated: aiGenerated };
-    if (settings.localContent) questions.content_type = contentType;
+    if (settings.localContent) {
+      questions.content_type = contentTypeFor(categoriesFrom(settings));
+    }
     return questions;
+  }
+
+  function categoryName(id, categories) {
+    var list = categories || [];
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id === id) return list[i].label;
+    }
+    return id;
   }
 
   function choiceConfidence(choice) {
@@ -50,7 +140,7 @@ ALETHEIA.questions = (function () {
     return 0;
   }
 
-  function toDetectResponse(engineName, modelId, lang, answers) {
+  function toDetectResponse(engineName, modelId, answers, categories) {
     var noul = answers && answers.ai_generated;
     if (!noul || typeof noul.noul !== "number") {
       throw new Error(ALETHEIA.t("missingAiJudgment"));
@@ -62,8 +152,6 @@ ALETHEIA.questions = (function () {
       label: label,
       score: score,
       model_id: modelId || engineName,
-      detected_lang: lang,
-      num_chunks: 1,
       detector: engineName
     };
     var choice = answers.content_type;
@@ -72,6 +160,7 @@ ALETHEIA.questions = (function () {
         engine: engineName,
         model_id: modelId || engineName,
         label: choice.choice,
+        name: categoryName(choice.choice, categories || []),
         confidence: choiceConfidence(choice),
         probabilities: choice.probabilities || {}
       };
@@ -81,9 +170,13 @@ ALETHEIA.questions = (function () {
 
   return {
     TEXT_BUDGET: TEXT_BUDGET,
+    MAX_CATEGORIES: MAX_CATEGORIES,
     aiGenerated: aiGenerated,
-    contentType: contentType,
-    guessLang: guessLang,
+    defaultContentCategories: defaultContentCategories,
+    nextCategoryId: nextCategoryId,
+    sanitizeCategories: sanitizeCategories,
+    categoriesFrom: categoriesFrom,
+    contentTypeFor: contentTypeFor,
     buildState: buildState,
     forSettings: forSettings,
     toDetectResponse: toDetectResponse

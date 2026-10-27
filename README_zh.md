@@ -1,40 +1,12 @@
-# Aletheia – AIGC 检测与内容分类
+# Aletheia – 浏览器 AI 文本检测扩展
 
 [English](README.md) · [开发文档（英文）](DEVELOPMENT.md)
 
-Aletheia 可以判断文本是否疑似由 AI 生成，也可以将文章内容分为**原创**、**搬运**或**广告**。你可以通过网页、Chrome 扩展或 HTTP API 使用。内容分类为可选功能，需要 Jev API 密钥。
+Aletheia 是一个浏览器扩展，可以判断文章文本是否疑似由 AI 生成，也可以选择按你自定义的类别给页面分类（默认是**原创**、**搬运**、**广告**）。扩展会使用你自己的 API key 直接调用 [Jev](https://docs.typesafe.ai/introduction) 决策引擎，不再需要单独的服务端。
 
-## 启动服务
+## 安装
 
-在本仓库目录下，用 Docker Compose 运行已发布的镜像：
-
-```bash
-docker compose -f docker-compose.yml up
-```
-
-打开 `http://localhost:8000` 即可使用网页；API 也在同一地址，交互式接口文档位于 `http://localhost:8000/docs`。
-
-如果要使用内容分类或用 Jev 检测 AIGC，请先设置 API 密钥：
-
-```bash
-export TYPESAFE_API_KEY="your-key"
-docker compose -f docker-compose.yml up
-```
-
-未设置密钥时，内置 AIGC Detector 和 DivEye 仍可使用；使用 Jev 的请求会返回 HTTP 503。
-
-## 使用网页
-
-1. 打开 `http://localhost:8000`，将文本粘贴到输入框。
-2. 选择一个或多个 AIGC 检测器。默认选中内置的 AIGC Detector。
-3. 如需同时进行内容分类，将 **Content type** 设为 **Jev**。服务端需要设置 `TYPESAFE_API_KEY`。
-4. 点击 **Detect**。每个检测器会显示一张结果卡片；启用内容分类后，其中一张卡片还会显示内容类别。
-
-内容类别包括 `original`（原创：作者自己的报道、经历或分析）、`repost`（搬运：复制或轻度改写的内容）和 `ad`（广告：推广性内容）。
-
-## 使用扩展
-
-从 [Releases](https://github.com/LeslieLeung/Aletheia/releases) 下载扩展。Chrome 使用 zip，Firefox 140 及以上直接使用签过名的 xpi。
+从 [Releases](https://github.com/LeslieLeung/Aletheia/releases) 下载扩展。Chrome 使用 zip，Firefox 140 及以上使用签过名的 xpi。
 
 Chrome：
 
@@ -46,40 +18,39 @@ Firefox：
 1. 下载最新的 `aletheia-extension-*.xpi`。
 2. 用 Firefox 打开这个文件，或进入 `about:addons`，选择**从文件安装附加组件**。
 
-然后点击 Aletheia 图标。默认是**服务器**模式：将 **API 地址**设为正在运行的服务，默认为 `http://localhost:8000`，再选择 **AI 检测器**。如需同时显示原创、搬运或广告类别，将**内容类型**设为 **Jev**；内容分类默认关闭。也可以切换到**本地**模式，让扩展直接调用 **Jev**。填写 Jev 服务器地址和 API key 即可。
+## 配置
 
-扩展会自动检查符合条件的文章页面，并用浮动徽章显示结果。点击徽章可查看详情；也可以在扩展弹窗中点击**立即检测**，手动检查当前页面。你还可以在**设置**中调整检测策略、最小文本长度和域名列表。
+打开扩展，点击**设置**。
 
-## 使用 API
+1. 填写 Jev 服务器地址（例如 `https://api.typesafe.ai`）和 API key。
+2. 点击**测试连接**确认可用。
+3. 如需同时显示内容分类，打开**内容分类**开关。可以修改默认的原创、搬运、广告类别，也可以自行增删类别。
 
-向 `POST /detect` 发送文本，获取 AIGC 判断：
+API key 只保存在浏览器的本地扩展存储中。只有在执行检测时，页面文本、标题和 URL 才会发送到你配置的 Jev 服务器。其他偏好设置可能会通过浏览器账号同步。
+
+## 使用
+
+扩展会自动检查符合条件的文章页面，并用浮动徽章显示结果。点击徽章可查看详情，也可以在弹窗中点击**立即检测**手动检查当前页面。弹窗右上角的开关用于开启或关闭检测，**内容分类**开关则控制下次检测是否同时显示内容类别。
+
+弹窗还会显示当前网站，并提供两个快捷操作：**始终检测**会加入白名单，**从不检测**会加入黑名单；再次点击已选中的按钮即可移除该规则。
+
+在**设置**中还可以调整：
+
+- 内容分类的类别和描述，它们会作为分类 prompt 发送给 Jev；
+- 徽章是否显示百分比；
+- 自动检测所需的最小文本长度；
+- 域名白名单和黑名单。可以一次添加一个或多个域名/网址，搜索列表，在两个列表之间切换域名，或直接移除。
+
+白名单优先：白名单中的域名始终检测，黑名单中的域名始终跳过。
+
+## 隐私
+
+只有在执行检测时，页面文本、标题和 URL 才会发送到你配置的 Jev 服务器。默认黑名单已经跳过常见的跟踪、社交和视频站点。
+
+## 开发
+
+见 [DEVELOPMENT.md](DEVELOPMENT.md)。运行扩展测试：
 
 ```bash
-curl -X POST http://localhost:8000/detect \
-  -H "Content-Type: application/json" \
-  -d '{"text":"这是一段用于分析的示例文本。"}'
+node --test scripts/test_extension.cjs
 ```
-
-响应中的 `label` 为 `human` 或 `ai`，`score` 表示对该标签的置信度，同时会返回模型、语言和检测器信息。默认检测器为 `onnx_classifier`。
-
-增加 `content_engine`，即可同时获取内容分类结果：
-
-```bash
-curl -X POST http://localhost:8000/detect \
-  -H "Content-Type: application/json" \
-  -d '{"text":"这是一段用于分析的示例文本。","content_engine":"jev"}'
-```
-
-此时响应会增加 `content` 对象，其 `label` 为 `original`、`repost` 或 `ad`，并包含置信度及各类别的概率。如果两项判断都想使用 Jev，再加上 `"detector":"jev"`。
-
-常用请求参数：
-
-| 字段 | 用途 |
-| --- | --- |
-| `text` | 必填，待分析文本。 |
-| `detector` | AIGC 检测器：`onnx_classifier`（默认）、`diveye` 或 `jev`。 |
-| `content_engine` | 设为 `jev` 时启用内容分类；省略则跳过。 |
-| `lang` | 设为 `zh` 或 `en` 可指定中文或英文默认模型；省略时自动识别语言。 |
-| `title`、`url` | 可选的页面上下文，传递给 Jev。 |
-
-服务运行后，可在 [`/docs`](http://localhost:8000/docs) 查看完整请求结构和检测策略选项；`GET /health` 可用于检查服务是否正常响应。

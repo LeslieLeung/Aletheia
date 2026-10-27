@@ -3,27 +3,11 @@ var ALETHEIA = globalThis.ALETHEIA || {};
 (function () {
   var detected = false;
 
-  function getDomain() {
-    return window.location.hostname.replace(/^www\./, "");
-  }
-
-  function domainMatches(domain, list) {
-    return list.some(function (d) {
-      return domain === d || domain.endsWith("." + d);
-    });
-  }
-
   // Whitelist takes priority over blacklist.
   // If whitelisted -> always allow. If blacklisted -> deny. Otherwise -> allow.
   function isDomainAllowed(settings) {
-    var domain = getDomain();
-    if (settings.whitelist.length > 0 && domainMatches(domain, settings.whitelist)) {
-      return true;
-    }
-    if (settings.blacklist.length > 0 && domainMatches(domain, settings.blacklist)) {
-      return false;
-    }
-    return true;
+    var domain = ALETHEIA.domains.hostOf(location.href);
+    return ALETHEIA.domains.status(domain, settings) !== "blacklist";
   }
 
   // manual=true: skip the domain filter and the article gate, and show errors

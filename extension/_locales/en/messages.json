@@ -10,32 +10,14 @@
   "appSubtitle": {
     "message": "AI Text Detector"
   },
-  "apiUrl": {
-    "message": "API URL"
-  },
-  "aiDetector": {
-    "message": "AI detector"
-  },
-  "contentType": {
-    "message": "Content type"
-  },
-  "off": {
-    "message": "Off"
+  "setupRequired": {
+    "message": "Set your Jev server and API key in Settings first."
   },
   "detectNow": {
     "message": "Detect Now"
   },
   "settings": {
     "message": "Settings"
-  },
-  "urlMustHttp": {
-    "message": "URL must use http or https"
-  },
-  "apiUrlSaved": {
-    "message": "API URL saved"
-  },
-  "invalidUrl": {
-    "message": "Invalid URL format"
   },
   "detecting": {
     "message": "Detecting…"
@@ -61,35 +43,77 @@
   "optionsSubtitle": {
     "message": "Configure the AI Text Detector extension."
   },
-  "apiConnection": {
-    "message": "API Connection"
+  "jevConnection": {
+    "message": "Jev connection"
+  },
+  "jevBaseUrl": {
+    "message": "Jev server"
+  },
+  "jevBaseHint": {
+    "message": "API root, for example https://api.typesafe.ai."
+  },
+  "jevApiKey": {
+    "message": "API key"
+  },
+  "jevKeyPlaceholder": {
+    "message": "API key"
+  },
+  "jevApiKeyHint": {
+    "message": "Stored only in this browser's local extension storage."
   },
   "testConnection": {
     "message": "Test Connection"
   },
+  "testing": {
+    "message": "Testing…"
+  },
+  "connectedOk": {
+    "message": "Connected successfully!"
+  },
+  "connectionFailed": {
+    "message": "Connection failed: "
+  },
+  "invalidUrl": {
+    "message": "Invalid URL format"
+  },
+  "urlMustHttp": {
+    "message": "URL must use http or https"
+  },
   "detection": {
     "message": "Detection"
   },
-  "contentTypeHint": {
-    "message": "Classify the page as original, repost, or ad. Off leaves the AI result unchanged."
+  "localContent": {
+    "message": "Classify content"
   },
-  "strategy": {
-    "message": "Strategy"
+  "localContentHint": {
+    "message": "Also label the page with your content categories."
   },
-  "strategyTruncate": {
-    "message": "Truncate"
+  "contentCategoriesHint": {
+    "message": "These categories and descriptions are sent to Jev as the classification prompt. Add or remove categories to match what you want to detect."
   },
-  "strategySlidingAvg": {
-    "message": "Sliding Average"
+  "promptLabel": {
+    "message": "Prompt"
   },
-  "strategyWeightedAvg": {
-    "message": "Weighted Average"
+  "addCategory": {
+    "message": "Add category"
   },
-  "strategySlidingVote": {
-    "message": "Sliding Vote"
+  "categoryName": {
+    "message": "Category name"
   },
-  "earlyStop": {
-    "message": "Early stop (skip remaining chunks when confidence is high)"
+  "categoryNamePlaceholder": {
+    "message": "e.g. Tutorial"
+  },
+  "categoryDescription": {
+    "message": "Category description"
+  },
+  "categoryDescriptionPlaceholder": {
+    "message": "What belongs in this category?"
+  },
+  "removeCategory": {
+    "message": "Remove category"
+  },
+  "categoryRequired": {
+    "message": "Every category needs a name, and at least one category is required."
   },
   "showBadgePercent": {
     "message": "Show percentage on the badge"
@@ -101,34 +125,61 @@
     "message": "Domain Filtering"
   },
   "domainHint": {
-    "message": "Whitelist takes priority: whitelisted domains are always detected, blacklisted domains are always skipped. One domain per line."
+    "message": "Whitelisted domains are always detected, blacklisted domains are always skipped. The whitelist takes priority."
   },
-  "whitelistLabel": {
-    "message": "Whitelist (always detect on these domains)"
+  "domainPlaceholder": {
+    "message": "example.com or a full URL"
   },
-  "blacklistLabel": {
-    "message": "Blacklist (never detect on these domains)"
+  "addDomain": {
+    "message": "Add"
+  },
+  "domainListLabel": {
+    "message": "Domain list"
+  },
+  "whitelistOption": {
+    "message": "Whitelist"
+  },
+  "blacklistOption": {
+    "message": "Blacklist"
+  },
+  "searchDomains": {
+    "message": "Search domains"
+  },
+  "domainCount": {
+    "message": "$1 whitelisted · $2 blacklisted"
+  },
+  "noDomains": {
+    "message": "No domains yet."
+  },
+  "noDomainMatches": {
+    "message": "No domains match your search."
+  },
+  "invalidDomain": {
+    "message": "Enter a valid domain"
+  },
+  "domainAlreadyListed": {
+    "message": "That domain is already in this list."
+  },
+  "domainSaved": {
+    "message": "Domain list saved"
+  },
+  "removeDomain": {
+    "message": "Remove domain"
+  },
+  "domainNote": {
+    "message": "You can also add the site you are browsing from the popup."
+  },
+  "allowSite": {
+    "message": "Always detect"
+  },
+  "blockSite": {
+    "message": "Never detect"
   },
   "saveSettings": {
     "message": "Save Settings"
   },
   "resetDefaults": {
     "message": "Reset to Defaults"
-  },
-  "enterApiUrl": {
-    "message": "Please enter an API URL"
-  },
-  "testing": {
-    "message": "Testing…"
-  },
-  "connectedOk": {
-    "message": "Connected successfully!"
-  },
-  "unexpectedApiResponse": {
-    "message": "Unexpected response: "
-  },
-  "connectionFailed": {
-    "message": "Connection failed: "
   },
   "settingsSaved": {
     "message": "Settings saved!"
@@ -199,51 +250,6 @@
   "networkError": {
     "message": "Network error"
   },
-  "detectSource": {
-    "message": "Detection source"
-  },
-  "modeServer": {
-    "message": "Server"
-  },
-  "modeLocal": {
-    "message": "Local"
-  },
-  "modeServerHint": {
-    "message": "Send the page to your Aletheia API."
-  },
-  "modeLocalHint": {
-    "message": "Use your Jev server directly from this extension."
-  },
-  "localEngine": {
-    "message": "Engine"
-  },
-  "engineJevDesc": {
-    "message": "Your Jev server"
-  },
-  "jevBaseUrl": {
-    "message": "Jev server"
-  },
-  "jevBaseHint": {
-    "message": "API root, for example https://api.typesafe.ai."
-  },
-  "jevApiKey": {
-    "message": "API key"
-  },
-  "jevKeyPlaceholder": {
-    "message": "API key"
-  },
-  "localContent": {
-    "message": "Classify content"
-  },
-  "localContentHint": {
-    "message": "Also label the page as original, repost, or ad, using the engine selected above."
-  },
-  "strategyLocalNote": {
-    "message": "Sliding-window strategy applies when Aletheia is running on a server."
-  },
-  "testJev": {
-    "message": "Test Jev"
-  },
   "missingJevKey": {
     "message": "Enter the Jev API key"
   },
@@ -253,16 +259,55 @@
   "jevAuthFailed": {
     "message": "Jev rejected the API key"
   },
-  "jevSaved": {
-    "message": "Jev settings saved"
-  },
-  "modeSaved": {
-    "message": "Run mode saved"
-  },
   "missingAiJudgment": {
     "message": "The model did not return an AI judgment"
   },
-  "unsupportedLocalEngine": {
-    "message": "Unsupported local engine"
+  "autoDetect": {
+    "message": "Auto-detect on article pages"
+  },
+  "autoDetectOn": {
+    "message": "Auto-detect on"
+  },
+  "autoDetectPaused": {
+    "message": "Paused"
+  },
+  "openSettings": {
+    "message": "Open Settings"
+  },
+  "siteAuto": {
+    "message": "Auto"
+  },
+  "showKey": {
+    "message": "Show API key"
+  },
+  "hideKey": {
+    "message": "Hide API key"
+  },
+  "connected": {
+    "message": "Connected"
+  },
+  "notConnected": {
+    "message": "Not connected"
+  },
+  "showBadgePercentHint": {
+    "message": "Display the confidence score next to the label."
+  },
+  "minTextLengthHint": {
+    "message": "Shorter pages are skipped during auto-detection."
+  },
+  "filterAll": {
+    "message": "All"
+  },
+  "unsavedChanges": {
+    "message": "Unsaved changes"
+  },
+  "allSaved": {
+    "message": "All changes saved"
+  },
+  "hideBadge": {
+    "message": "Hide"
+  },
+  "close": {
+    "message": "Close"
   }
 }

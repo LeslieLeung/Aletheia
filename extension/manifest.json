@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "default_locale": "en",
   "name": "__MSG_extName__",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "description": "__MSG_extDesc__",
   "icons": {
     "16": "icons/icon16.png",
@@ -46,6 +46,7 @@
       "matches": ["http://*/*", "https://*/*"],
       "js": [
         "shared/constants.js",
+        "shared/domains.js",
         "shared/storage.js",
         "shared/i18n.js",
         "lib/Readability-readerable.js",

@@ -64,8 +64,8 @@ ALETHEIA.jev = (function () {
         data: ALETHEIA.questions.toDetectResponse(
           "jev",
           data.model || "jev-latest",
-          ALETHEIA.questions.guessLang(state.text || ""),
-          data.answers
+          data.answers,
+          ALETHEIA.questions.categoriesFrom(settings)
         )
       };
     });

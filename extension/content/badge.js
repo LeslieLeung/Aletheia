@@ -15,127 +15,180 @@ ALETHEIA.badge = (function () {
   function getStyles() {
     return '\
       * { box-sizing: border-box; margin: 0; padding: 0; } \
-      :host { all: initial; font-family: system-ui, -apple-system, sans-serif; } \
+      :host { \
+        all: initial; \
+        font-family: system-ui, -apple-system, "Segoe UI", sans-serif; \
+        --surface: #ffffff; \
+        --text: #1f1f26; \
+        --muted: #6b6b78; \
+        --line: #efeff4; \
+        --track: #ececf2; \
+        --shadow: 0 10px 30px rgba(15, 15, 30, 0.16), 0 2px 6px rgba(15, 15, 30, 0.08); \
+        --human-bg: #dcfce7; --human-fg: #166534; --human-bar: #22c55e; \
+        --ai-bg: #fee2e2; --ai-fg: #991b1b; --ai-bar: #ef4444; \
+        --err-bg: #fef3c7; --err-fg: #92400e; \
+        --load-bg: #f3f4f6; --load-fg: #6b7280; \
+      } \
+      @media (prefers-color-scheme: dark) { \
+        :host { \
+          --surface: #1f1f27; \
+          --text: #ececf1; \
+          --muted: #a1a1ad; \
+          --line: #2d2d39; \
+          --track: #33333f; \
+          --shadow: 0 10px 30px rgba(0, 0, 0, 0.5); \
+          --human-bg: #14532d; --human-fg: #bbf7d0; --human-bar: #4ade80; \
+          --ai-bg: #7f1d1d; --ai-fg: #fecaca; --ai-bar: #f87171; \
+          --err-bg: #78350f; --err-fg: #fde68a; \
+          --load-bg: #2a2a33; --load-fg: #c4c4cf; \
+        } \
+      } \
+      .wrap { \
+        position: relative; \
+        display: inline-flex; \
+        flex-direction: column; \
+        align-items: flex-end; \
+        animation: rise 0.25s cubic-bezier(0.2, 0.8, 0.3, 1); \
+      } \
+      @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } } \
       .badge-pill { \
         display: inline-flex; \
         align-items: center; \
-        gap: 6px; \
-        padding: 8px 14px; \
+        justify-content: center; \
+        gap: 7px; \
+        width: 200px; \
+        height: 34px; \
+        padding: 0 14px; \
+        border: none; \
         border-radius: 999px; \
+        font: inherit; \
         font-size: 13px; \
         font-weight: 700; \
-        cursor: pointer; \
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15); \
-        transition: all 0.2s ease; \
-        user-select: none; \
-        text-transform: uppercase; \
-        letter-spacing: 0.5px; \
         line-height: 1; \
-      } \
-      .badge-pill:hover { \
-        box-shadow: 0 4px 12px rgba(0,0,0,0.25); \
-        transform: translateY(-1px); \
-      } \
-      .badge-pill.loading:hover { \
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15); \
-        transform: none; \
-      } \
-      .badge-pill.sized { \
-        justify-content: center; \
-        width: 200px; \
-        height: 32px; \
-        padding: 0 10px; \
-        letter-spacing: 0; \
-        font-variant-numeric: tabular-nums; \
         white-space: nowrap; \
+        font-variant-numeric: tabular-nums; \
+        cursor: pointer; \
+        user-select: none; \
+        box-shadow: 0 2px 10px rgba(0,0,0,0.14); \
+        transition: box-shadow 0.2s ease, transform 0.2s ease; \
       } \
-      .badge-pill .sep { \
-        width: 1px; \
-        height: 12px; \
-        background: currentColor; \
-        opacity: 0.4; \
-        flex: 0 0 1px; \
+      .badge-pill:hover { box-shadow: 0 6px 16px rgba(0,0,0,0.2); transform: translateY(-1px); } \
+      .badge-pill:active { transform: translateY(0); } \
+      .badge-pill:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; } \
+      .badge-pill.loading { cursor: default; background: var(--load-bg); color: var(--load-fg); font-weight: 600; } \
+      .badge-pill.loading:hover { box-shadow: 0 2px 10px rgba(0,0,0,0.14); transform: none; } \
+      .badge-pill.human { background: var(--human-bg); color: var(--human-fg); } \
+      .badge-pill.ai { background: var(--ai-bg); color: var(--ai-fg); } \
+      .badge-pill.error { background: var(--err-bg); color: var(--err-fg); } \
+      .badge-pill .dot { \
+        width: 7px; height: 7px; flex: 0 0 7px; \
+        border-radius: 50%; background: currentColor; \
       } \
-      .badge-pill .content-name { \
-        text-transform: none; \
-        letter-spacing: 0; \
-      } \
-      .badge-pill.loading { \
-        background: #f3f4f6; color: #6b7280; \
-        cursor: default; \
-      } \
-      .badge-pill.human { background: #dcfce7; color: #166534; } \
-      .badge-pill.ai { background: #fee2e2; color: #991b1b; } \
-      .badge-pill.error { background: #fef3c7; color: #92400e; } \
+      .badge-pill.ai .dot { animation: pulse 2s ease-in-out infinite; } \
+      @keyframes pulse { 50% { opacity: 0.35; } } \
+      .badge-pill .sep { width: 1px; height: 12px; background: currentColor; opacity: 0.35; flex: 0 0 1px; } \
+      .badge-pill .content-name { max-width: 110px; overflow: hidden; text-overflow: ellipsis; font-weight: 600; } \
+      .badge-pill .err-text { overflow: hidden; text-overflow: ellipsis; } \
       .spinner { \
-        width: 14px; height: 14px; \
-        border: 2px solid #d1d5db; \
-        border-top-color: #6b7280; \
+        width: 13px; height: 13px; \
+        border: 2px solid currentColor; \
+        border-right-color: transparent; \
         border-radius: 50%; \
-        animation: spin 0.8s linear infinite; \
+        animation: spin 0.7s linear infinite; \
       } \
       @keyframes spin { to { transform: rotate(360deg); } } \
+      .dismiss { \
+        position: absolute; \
+        top: -6px; left: -6px; \
+        width: 20px; height: 20px; \
+        display: grid; place-items: center; \
+        border: none; border-radius: 50%; \
+        background: var(--surface); color: var(--muted); \
+        box-shadow: 0 1px 4px rgba(0,0,0,0.2); \
+        font: inherit; font-size: 13px; line-height: 1; \
+        cursor: pointer; \
+        opacity: 0; transform: scale(0.8); \
+        transition: opacity 0.15s, transform 0.15s; \
+      } \
+      .wrap:hover .dismiss, .dismiss:focus-visible { opacity: 1; transform: none; } \
+      .dismiss:hover { color: var(--text); } \
       .panel { \
         position: absolute; \
-        bottom: calc(100% + 8px); \
+        bottom: calc(100% + 10px); \
         right: 0; \
-        background: #fff; \
-        border-radius: 12px; \
-        box-shadow: 0 4px 20px rgba(0,0,0,0.15); \
+        width: 290px; \
         padding: 16px; \
-        min-width: 280px; \
+        border-radius: 14px; \
+        background: var(--surface); \
+        color: var(--text); \
+        box-shadow: var(--shadow); \
         font-size: 13px; \
-        color: #333; \
-        display: none; \
         line-height: 1.5; \
+        opacity: 0; \
+        visibility: hidden; \
+        transform: translateY(6px) scale(0.98); \
+        transform-origin: bottom right; \
+        transition: opacity 0.18s ease, transform 0.18s ease, visibility 0s linear 0.18s; \
       } \
-      .panel.show { display: block; } \
+      .panel.show { \
+        opacity: 1; visibility: visible; transform: none; \
+        transition: opacity 0.18s ease, transform 0.18s ease; \
+      } \
       .panel-title { \
-        font-size: 14px; font-weight: 700; \
-        margin-bottom: 10px; \
         display: flex; align-items: center; gap: 8px; \
+        padding-right: 22px; \
+        font-size: 14px; font-weight: 700; \
       } \
       .panel-label { \
         display: inline-block; \
-        padding: 2px 8px; \
+        padding: 2px 9px; \
         border-radius: 999px; \
-        font-size: 12px; \
-        font-weight: 700; \
-        text-transform: uppercase; \
+        font-size: 12px; font-weight: 700; \
       } \
-      .panel-label.human { background: #dcfce7; color: #166534; } \
-      .panel-label.ai { background: #fee2e2; color: #991b1b; } \
+      .panel-label.human { background: var(--human-bg); color: var(--human-fg); } \
+      .panel-label.ai { background: var(--ai-bg); color: var(--ai-fg); } \
+      .panel-label.error { background: var(--err-bg); color: var(--err-fg); } \
+      .meter { margin: 14px 0 10px; } \
+      .meter-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; } \
+      .meter-key { color: var(--muted); font-size: 12px; } \
+      .meter-val { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; } \
+      .meter-track { height: 6px; border-radius: 999px; background: var(--track); overflow: hidden; } \
+      .meter-fill { height: 100%; border-radius: inherit; width: 0; transition: width 0.6s cubic-bezier(0.2, 0.8, 0.3, 1); } \
+      .meter-fill.human { background: var(--human-bar); } \
+      .meter-fill.ai { background: var(--ai-bar); } \
       .panel-row { \
-        display: flex; \
-        justify-content: space-between; \
-        padding: 4px 0; \
-        border-bottom: 1px solid #f3f4f6; \
+        display: flex; justify-content: space-between; gap: 12px; \
+        padding: 6px 0; \
+        border-top: 1px solid var(--line); \
+        font-size: 12.5px; \
       } \
-      .panel-row:last-child { border-bottom: none; } \
-      .panel-key { color: #666; } \
-      .panel-val { font-weight: 600; color: #333; } \
+      .panel-key { color: var(--muted); flex: 0 0 auto; } \
+      .panel-val { font-weight: 600; text-align: right; min-width: 0; overflow-wrap: anywhere; } \
+      .panel-msg { margin-top: 10px; color: var(--muted); font-size: 12.5px; overflow-wrap: anywhere; } \
       .close-btn { \
-        position: absolute; top: 8px; right: 10px; \
-        background: none; border: none; \
-        font-size: 18px; color: #999; cursor: pointer; \
-        line-height: 1; padding: 2px 4px; \
+        position: absolute; top: 10px; right: 10px; \
+        width: 24px; height: 24px; \
+        display: grid; place-items: center; \
+        border: none; border-radius: 6px; \
+        background: none; color: var(--muted); \
+        font: inherit; font-size: 17px; line-height: 1; \
+        cursor: pointer; \
       } \
-      .close-btn:hover { color: #333; } \
-      .tooltip { \
-        display: none; \
-        position: absolute; \
-        bottom: calc(100% + 4px); \
-        right: 0; \
-        background: #1f2937; \
-        color: #fff; \
-        padding: 6px 10px; \
-        border-radius: 6px; \
-        font-size: 12px; \
-        white-space: nowrap; \
-        pointer-events: none; \
+      .close-btn:hover { background: var(--line); color: var(--text); } \
+      @media (prefers-reduced-motion: reduce) { \
+        *, .wrap, .panel { animation: none !important; transition: none !important; } \
       } \
-      .badge-pill.error:hover ~ .tooltip { display: block; } \
     ';
+  }
+
+  function onDocumentPointer(e) {
+    if (!expanded || !host) return;
+    var path = e.composedPath ? e.composedPath() : [];
+    if (path.indexOf(host) === -1) setExpanded(false);
+  }
+
+  function onDocumentKey(e) {
+    if (expanded && e.key === "Escape") setExpanded(false);
   }
 
   function create() {
@@ -149,17 +202,63 @@ ALETHEIA.badge = (function () {
     shadow.appendChild(style);
 
     var wrapper = document.createElement("div");
-    wrapper.style.position = "relative";
-    wrapper.style.display = "inline-flex";
-    wrapper.style.flexDirection = "column";
-    wrapper.style.alignItems = "flex-end";
+    wrapper.className = "wrap";
     shadow.appendChild(wrapper);
 
     document.body.appendChild(host);
+    document.addEventListener("pointerdown", onDocumentPointer, true);
+    document.addEventListener("keydown", onDocumentKey, true);
   }
 
   function getWrapper() {
-    return shadow.querySelector("div");
+    return shadow.querySelector(".wrap");
+  }
+
+  function setExpanded(next) {
+    expanded = next;
+    if (!shadow) return;
+    var panel = shadow.getElementById("panel");
+    var pill = shadow.getElementById("pill");
+    if (panel) panel.classList.toggle("show", expanded);
+    if (pill) pill.setAttribute("aria-expanded", expanded ? "true" : "false");
+    if (expanded) {
+      var fill = shadow.getElementById("meter-fill");
+      if (fill) {
+        requestAnimationFrame(function () {
+          fill.style.width = fill.dataset.width;
+        });
+      }
+    }
+  }
+
+  function dismissButton() {
+    var label = esc(ALETHEIA.t("hideBadge"));
+    return '<button type="button" class="dismiss" id="dismiss" title="' + label + '" aria-label="' + label + '">\u00d7</button>';
+  }
+
+  function bindCommon() {
+    var pill = shadow.getElementById("pill");
+    var closeBtn = shadow.getElementById("close-panel");
+    var dismiss = shadow.getElementById("dismiss");
+
+    if (pill) {
+      pill.addEventListener("click", function () {
+        setExpanded(!expanded);
+      });
+    }
+    if (closeBtn) {
+      closeBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        setExpanded(false);
+        if (pill) pill.focus();
+      });
+    }
+    if (dismiss) {
+      dismiss.addEventListener("click", function (e) {
+        e.stopPropagation();
+        remove();
+      });
+    }
   }
 
   function showLoading() {
@@ -168,7 +267,7 @@ ALETHEIA.badge = (function () {
     currentResult = null;
     var wrapper = getWrapper();
     wrapper.innerHTML =
-      '<div class="badge-pill loading">' +
+      '<div class="badge-pill loading" role="status">' +
         '<div class="spinner"></div>' +
         '<span>' + esc(ALETHEIA.t("detecting")) + '</span>' +
       '</div>';
@@ -189,23 +288,43 @@ ALETHEIA.badge = (function () {
   function contentInfo(data) {
     if (!data.content || !data.content.label) return null;
     var key = CONTENT_KEYS[data.content.label];
+    var name = data.content.name || (key ? ALETHEIA.t(key) : data.content.label);
     return {
-      name: key ? ALETHEIA.t(key) : data.content.label,
+      name: name,
       confidence: (data.content.confidence * 100).toFixed(1)
     };
+  }
+
+  function row(key, value) {
+    return '<div class="panel-row"><span class="panel-key">' + esc(ALETHEIA.t(key)) +
+      '</span><span class="panel-val">' + esc(value) + '</span></div>';
   }
 
   function contentRow(data) {
     var info = contentInfo(data);
     if (!info) return "";
-    return '<div class="panel-row"><span class="panel-key">' + esc(ALETHEIA.t("content")) + '</span><span class="panel-val">' +
-      esc(info.name) + " " + info.confidence + "%</span></div>";
+    return row("content", info.name + " · " + info.confidence + "%");
+  }
+
+  function languageRow(data) {
+    if (!data.detected_lang) return "";
+    return row("language", data.detected_lang);
+  }
+
+  function modelRow(data) {
+    if (!data.model_id) return "";
+    return row("model", data.model_id);
+  }
+
+  function chunksRow(data) {
+    if (typeof data.num_chunks !== "number") return "";
+    return row("chunks", String(data.num_chunks));
   }
 
   function pillInner(displayLabel, score, data, showPercent) {
     var info = contentInfo(data);
     var labelText = showPercent ? displayLabel + " " + score + "%" : displayLabel;
-    var html = "<span>" + esc(labelText) + "</span>";
+    var html = '<span class="dot"></span><span>' + esc(labelText) + "</span>";
     if (!info) return html;
     return html + '<span class="sep"></span><span class="content-name">' + esc(info.name) + "</span>";
   }
@@ -213,6 +332,7 @@ ALETHEIA.badge = (function () {
   function showResult(data, options) {
     create();
     currentResult = data;
+    expanded = false;
     var label = data.label;
     var displayLabel = resultLabel(label);
     var score = (data.score * 100).toFixed(1);
@@ -221,54 +341,61 @@ ALETHEIA.badge = (function () {
 
     var wrapper = getWrapper();
     wrapper.innerHTML =
-      '<div class="panel" id="panel">' +
-        '<button class="close-btn" id="close-panel">\u00d7</button>' +
-        '<div class="panel-title">' +
+      '<div class="panel" id="panel" role="dialog" aria-labelledby="panel-title">' +
+        '<button type="button" class="close-btn" id="close-panel" aria-label="' + esc(ALETHEIA.t("close")) + '">\u00d7</button>' +
+        '<div class="panel-title" id="panel-title">' +
           '<span class="panel-label ' + cls + '">' + esc(displayLabel) + '</span>' +
           '<span>' + esc(ALETHEIA.t("detectionResult")) + '</span>' +
         '</div>' +
-        '<div class="panel-row"><span class="panel-key">' + esc(ALETHEIA.t("confidence")) + '</span><span class="panel-val">' + score + '%</span></div>' +
+        '<div class="meter">' +
+          '<div class="meter-head">' +
+            '<span class="meter-key">' + esc(ALETHEIA.t("confidence")) + '</span>' +
+            '<span class="meter-val">' + score + '%</span>' +
+          '</div>' +
+          '<div class="meter-track"><div class="meter-fill ' + cls + '" id="meter-fill" data-width="' + score + '%"></div></div>' +
+        '</div>' +
         contentRow(data) +
-        '<div class="panel-row"><span class="panel-key">' + esc(ALETHEIA.t("language")) + '</span><span class="panel-val">' + esc(data.detected_lang) + '</span></div>' +
-        '<div class="panel-row"><span class="panel-key">' + esc(ALETHEIA.t("model")) + '</span><span class="panel-val">' + esc(data.model_id) + '</span></div>' +
-        '<div class="panel-row"><span class="panel-key">' + esc(ALETHEIA.t("chunks")) + '</span><span class="panel-val">' + esc(String(data.num_chunks)) + '</span></div>' +
+        languageRow(data) +
+        modelRow(data) +
+        chunksRow(data) +
       '</div>' +
-      '<div class="badge-pill sized ' + cls + '" id="pill">' +
+      '<button type="button" class="badge-pill ' + cls + '" id="pill" aria-haspopup="dialog" aria-expanded="false">' +
         pillInner(displayLabel, score, data, showPercent) +
-      '</div>';
+      '</button>' +
+      dismissButton();
 
-    var pill = shadow.getElementById("pill");
-    var panel = shadow.getElementById("panel");
-    var closeBtn = shadow.getElementById("close-panel");
-
-    pill.addEventListener("click", function () {
-      expanded = !expanded;
-      panel.classList.toggle("show", expanded);
-    });
-
-    closeBtn.addEventListener("click", function (e) {
-      e.stopPropagation();
-      expanded = false;
-      panel.classList.remove("show");
-    });
+    bindCommon();
   }
 
   function showError(msg) {
     create();
     currentResult = null;
+    expanded = false;
     var wrapper = getWrapper();
     var failed = ALETHEIA.t("detectionFailed");
     wrapper.innerHTML =
-      '<div class="badge-pill error">' +
-        '<span>' + esc(failed) + '</span>' +
+      '<div class="panel" id="panel" role="dialog" aria-labelledby="panel-title">' +
+        '<button type="button" class="close-btn" id="close-panel" aria-label="' + esc(ALETHEIA.t("close")) + '">\u00d7</button>' +
+        '<div class="panel-title" id="panel-title">' +
+          '<span class="panel-label error">' + esc(failed) + '</span>' +
+        '</div>' +
+        '<p class="panel-msg">' + esc(msg || failed) + '</p>' +
       '</div>' +
-      '<div class="tooltip">' + esc(msg || failed) + '</div>';
+      '<button type="button" class="badge-pill error" id="pill" title="' + esc(msg || failed) + '" aria-haspopup="dialog" aria-expanded="false">' +
+        '<span class="dot"></span>' +
+        '<span class="err-text">' + esc(failed) + '</span>' +
+      '</button>' +
+      dismissButton();
+
+    bindCommon();
   }
 
   function remove() {
     if (host && host.parentNode) {
       host.parentNode.removeChild(host);
     }
+    document.removeEventListener("pointerdown", onDocumentPointer, true);
+    document.removeEventListener("keydown", onDocumentKey, true);
     host = null;
     shadow = null;
     expanded = false;
