@@ -1,4 +1,4 @@
-var ALETHEIA = self.ALETHEIA || {};
+var ALETHEIA = globalThis.ALETHEIA || {};
 
 ALETHEIA.connection = (function () {
   function $(id) {

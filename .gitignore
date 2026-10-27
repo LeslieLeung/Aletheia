@@ -21,3 +21,7 @@ models/openai-community/
 
 .claude
 .cursor
+
+# web-ext signing output and the local upload id it writes beside the extension
+web-ext-artifacts/
+extension/.amo-upload-uuid

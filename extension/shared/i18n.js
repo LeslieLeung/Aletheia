@@ -1,4 +1,4 @@
-var ALETHEIA = self.ALETHEIA || {};
+var ALETHEIA = globalThis.ALETHEIA || {};
 
 ALETHEIA.t = function (key, substitutions) {
   if (!chrome.i18n || typeof chrome.i18n.getMessage !== "function") return key;

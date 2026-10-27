@@ -82,10 +82,14 @@ docker compose up --build
 
 To add another decision engine, implement `DecisionEngine.judge(state, *, include_ai, include_content)` in `app/engines`, register the instance in [`app/main.py`](app/main.py), and add its name to `DetectorType` and/or `ContentEngine` in [`app/schemas.py`](app/schemas.py).
 
-## Chrome extension
+## Browser extension
 
-The extension source is in [`extension/`](extension/). The content script extracts article text, the background service worker sends requests, and the badge displays the AI result and optional content category. Settings are stored in Chrome extension storage. The content engine defaults to `off`.
+The extension source is in [`extension/`](extension/). The content script extracts article text, the background script sends requests, and the badge displays the AI result and optional content category. Settings are stored with `chrome.storage`, which Firefox also provides. The content engine defaults to `off`.
+
+Firefox still has no extension service workers. The manifest lists `background.scripts` for Firefox's event page and `background.service_worker` for Chrome. Chrome 121 and newer ignores `scripts` in a Manifest V3 extension. `background/service-worker.js` calls `importScripts` only when that function exists, so the same file is the last event-page script on Firefox and the service worker on Chrome. `browser_specific_settings.gecko` sets a stable add-on ID, requires Firefox 140, and declares that detection transmits page text and the page URL. Firefox for Android requires 142 for that declaration. Its add-on manager still cannot show or edit host-permission grants, so Android is not a supported target.
 
 Server mode posts to the configured Aletheia `/detect` endpoint. The extension can select a detector and content engine independently. When Jev is selected for both, the API combines the judgments into one engine call.
+
+Shared scripts keep the `ALETHEIA` namespace on `globalThis`. Firefox content scripts have a global scope distinct from `self`/`window`, so reading the namespace from `self` would discard helpers loaded by earlier scripts. Run `node --test scripts/test_extension.cjs` to check content-script initialization and manual detection with both global-scope models, plus Firefox event-page and Chrome service-worker initialization. These tests use mocked browser APIs and do not replace a browser smoke test.
 
 Local mode skips the Aletheia API and routes through the selected local engine. The extension currently supports Jev, calling the configured server's `POST /v1/systemone` with the API key kept in `chrome.storage.local`. The shared question and response helpers in `extension/shared/questions.js` provide the common contract for additional engines.

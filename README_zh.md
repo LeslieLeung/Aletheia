@@ -32,12 +32,21 @@ docker compose -f docker-compose.yml up
 
 内容类别包括 `original`（原创：作者自己的报道、经历或分析）、`repost`（搬运：复制或轻度改写的内容）和 `ad`（广告：推广性内容）。
 
-## 使用 Chrome 扩展
+## 使用扩展
 
-1. 从 [Releases](https://github.com/LeslieLeung/Aletheia/releases) 下载最新的 `aletheia-extension-*.zip` 并解压。
+从 [Releases](https://github.com/LeslieLeung/Aletheia/releases) 下载扩展。Chrome 使用 zip，Firefox 140 及以上直接使用签过名的 xpi。
+
+Chrome：
+
+1. 下载最新的 `aletheia-extension-*.zip` 并解压。
 2. 打开 `chrome://extensions`，启用**开发者模式**，点击**加载已解压的扩展程序**并选择解压后的文件夹。
-3. 点击 Aletheia 图标。默认是**服务器**模式：将 **API 地址**设为正在运行的服务，默认为 `http://localhost:8000`，再选择 **AI 检测器**。如需同时显示原创、搬运或广告类别，将**内容类型**设为 **Jev**；内容分类默认关闭。
-4. 也可以切换到**本地**模式，让扩展直接调用 **Jev**。填写 Jev 服务器地址和 API key 即可。
+
+Firefox：
+
+1. 下载最新的 `aletheia-extension-*.xpi`。
+2. 用 Firefox 打开这个文件，或进入 `about:addons`，选择**从文件安装附加组件**。
+
+然后点击 Aletheia 图标。默认是**服务器**模式：将 **API 地址**设为正在运行的服务，默认为 `http://localhost:8000`，再选择 **AI 检测器**。如需同时显示原创、搬运或广告类别，将**内容类型**设为 **Jev**；内容分类默认关闭。也可以切换到**本地**模式，让扩展直接调用 **Jev**。填写 Jev 服务器地址和 API key 即可。
 
 扩展会自动检查符合条件的文章页面，并用浮动徽章显示结果。点击徽章可查看详情；也可以在扩展弹窗中点击**立即检测**，手动检查当前页面。你还可以在**设置**中调整检测策略、最小文本长度和域名列表。
 

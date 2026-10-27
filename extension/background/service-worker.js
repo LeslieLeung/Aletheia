@@ -1,10 +1,15 @@
-importScripts(
-  "../shared/constants.js",
-  "../shared/storage.js",
-  "../shared/i18n.js",
-  "../shared/questions.js",
-  "../shared/jev.js"
-);
+// Chrome runs this file as a service worker and loads dependencies here.
+// Firefox runs it as an event page after manifest background.scripts, which
+// already loaded those files. Event pages have no importScripts.
+if (typeof importScripts === "function") {
+  importScripts(
+    "../shared/constants.js",
+    "../shared/storage.js",
+    "../shared/i18n.js",
+    "../shared/questions.js",
+    "../shared/jev.js"
+  );
+}
 
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
   if (message.type === ALETHEIA.MSG.DETECT_TEXT) {

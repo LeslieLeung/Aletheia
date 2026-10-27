@@ -20,6 +20,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Check versions
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            python3 scripts/sync-version.py --check --tag "${{ github.ref_name }}"
+          else
+            python3 scripts/sync-version.py --check
+          fi
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 

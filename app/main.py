@@ -1,4 +1,5 @@
 import asyncio
+import tomllib
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import AsyncIterator
@@ -15,7 +16,14 @@ from app.engines.registry import DecisionEngineRegistry
 from app.lang_detect import detect_language
 from app.schemas import ContentJudgmentResponse, DetectRequest, DetectResponse
 
-_STATIC_DIR = Path(__file__).resolve().parent / "static"
+_ROOT = Path(__file__).resolve().parents[1]
+_STATIC_DIR = _ROOT / "app" / "static"
+
+
+def _project_version() -> str:
+    with (_ROOT / "pyproject.toml").open("rb") as handle:
+        return tomllib.load(handle)["project"]["version"]
+
 
 registry = DetectorRegistry()
 registry.register("onnx_classifier", OnnxClassifierDetector(), default=True)
@@ -34,7 +42,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(
     title="Aletheia – AIGC Text Detector API",
-    version="0.1.0",
+    version=_project_version(),
     lifespan=lifespan,
 )
 

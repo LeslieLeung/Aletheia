@@ -1,4 +1,5 @@
-var ALETHEIA = self.ALETHEIA || {};
+// Firefox content-script globals are distinct from self/window.
+var ALETHEIA = globalThis.ALETHEIA || {};
 
 ALETHEIA.DEFAULTS = Object.freeze({
   apiUrl: "http://localhost:8000",

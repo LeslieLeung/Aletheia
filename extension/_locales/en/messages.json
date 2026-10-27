@@ -185,7 +185,7 @@
     "message": "Text too short ($1 chars, need $2)"
   },
   "noServiceWorkerResponse": {
-    "message": "No response from service worker"
+    "message": "No response from the extension background"
   },
   "notAnArticle": {
     "message": "Page does not appear to be an article"

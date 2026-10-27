@@ -1,4 +1,4 @@
-var ALETHEIA = self.ALETHEIA || {};
+var ALETHEIA = globalThis.ALETHEIA || {};
 
 (function () {
   var detected = false;

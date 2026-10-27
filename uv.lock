@@ -83,7 +83,7 @@ wheels = [
 
 [[package]]
 name = "aletheia"
-version = "0.1.0"
+version = "0.3.2"
 source = { virtual = "." }
 dependencies = [
     { name = "fastapi" },

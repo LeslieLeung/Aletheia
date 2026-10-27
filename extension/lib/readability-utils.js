@@ -1,4 +1,4 @@
-var ALETHEIA = self.ALETHEIA || {};
+var ALETHEIA = globalThis.ALETHEIA || {};
 
 // Auto-detect gate. Manual detect sets skipReadabilityCheck and bypasses it.
 // isProbablyReaderable only checks that some readable text exists, so the gate

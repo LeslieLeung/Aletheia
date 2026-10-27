@@ -1,4 +1,4 @@
-var ALETHEIA = self.ALETHEIA || {};
+var ALETHEIA = globalThis.ALETHEIA || {};
 
 ALETHEIA.questions = (function () {
   var TEXT_BUDGET = 6000;
