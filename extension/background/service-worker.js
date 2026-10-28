@@ -7,7 +7,8 @@ if (typeof importScripts === "function") {
     "../shared/storage.js",
     "../shared/i18n.js",
     "../shared/questions.js",
-    "../shared/jev.js"
+    "../shared/jev.js",
+    "detection-cache.js"
   );
 }
 
@@ -29,9 +30,7 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 async function handleDetect(message) {
   try {
     var settings = await ALETHEIA.storage.get();
-    var state = ALETHEIA.questions.buildState(message);
-    var questions = ALETHEIA.questions.forSettings(settings);
-    return await ALETHEIA.jev.detect(settings, state, questions);
+    return await ALETHEIA.detection.detect(settings, message);
   } catch (err) {
     return { success: false, error: err.message || ALETHEIA.t("networkError") };
   }
