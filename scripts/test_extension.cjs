@@ -2,6 +2,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
+const { webcrypto } = require("node:crypto");
 const { test } = require("node:test");
 
 const extensionDir = path.join(__dirname, "../extension");
@@ -17,6 +18,7 @@ function load(context, file) {
 function environment(separateWindow, stored) {
   const syncStored = (stored && stored.sync) || {};
   const localStored = (stored && stored.local) || {};
+  const sessionStored = (stored && stored.session) || {};
   const listeners = [];
   const sent = [];
   const context = vm.createContext({
@@ -34,11 +36,20 @@ function environment(separateWindow, stored) {
             callback({ ...defaults, blacklist: ["example.com"], ...syncStored });
           }
         },
-        local: { get: (defaults, callback) => callback({ ...defaults, ...localStored }) }
+        local: { get: (defaults, callback) => callback({ ...defaults, ...localStored }) },
+        session: {
+          get(key, callback) { callback(structuredClone(sessionStored)); },
+          set(items, callback) {
+            Object.assign(sessionStored, structuredClone(items));
+            callback();
+          }
+        }
       },
       i18n: { getMessage: key => key }
     },
     AbortSignal,
+    crypto: webcrypto,
+    TextEncoder,
     URL,
     location: { hostname: "example.com", href: "https://example.com/article" }
   });
@@ -46,7 +57,7 @@ function environment(separateWindow, stored) {
   // Chrome content scripts and extension pages use the window as their global.
   context.self = separateWindow ? { location: context.location } : context;
   context.window = context.self;
-  return { context, listeners, sent };
+  return { context, listeners, sent, sessionStored };
 }
 
 function loadBackground(context, separateWindow) {
@@ -65,6 +76,35 @@ function detectViaBackground(listeners, message) {
     const pending = listeners[0]({ type: "DETECT_TEXT", ...message }, {}, resolve);
     assert.equal(pending, true);
   });
+}
+
+function deferred() {
+  let resolve;
+  const promise = new Promise(done => { resolve = done; });
+  return { promise, resolve };
+}
+
+function jevResponse(probability = 0.1) {
+  return {
+    ok: true,
+    json: async () => ({ answers: { ai_generated: { noul: probability } } })
+  };
+}
+
+function keysReady(context, count) {
+  const ready = deferred();
+  let completed = 0;
+  context.crypto = {
+    subtle: {
+      async digest(...args) {
+        const result = await webcrypto.subtle.digest(...args);
+        if (++completed === count) ready.resolve();
+        return result;
+      }
+    }
+  };
+  // Let key consumers finish their promise continuations before releasing fetch.
+  return ready.promise.then(tick);
 }
 
 test("settings own credentials and the popup stays a quick action", () => {
@@ -141,6 +181,7 @@ for (const separateWindow of [true, false]) {
     assert.equal(sent.length, 1);
     assert.equal(sent[0].type, api.MSG.DETECT_TEXT);
     assert.equal(sent[0].text, text);
+    assert.equal(sent[0].forceRerun, true, "manual detection bypasses completed results");
     assert.equal(result.label, "human");
   });
 
@@ -244,5 +285,231 @@ for (const separateWindow of [true, false]) {
       "category_1,news,category_2"
     );
     assert.equal(sanitized.length, 3);
+  });
+}
+
+for (const separateWindow of [true, false]) {
+  const browser = separateWindow ? "Firefox" : "Chrome";
+
+  test(`${browser}: results are reused across URLs and survive background restart`, async () => {
+    const stored = { local: { jevApiKey: "private-credential" }, session: {} };
+    const first = environment(false, stored);
+    let calls = 0;
+    first.context.fetch = async () => { calls++; return jevResponse(); };
+    loadBackground(first.context, separateWindow);
+    const message = { text: "Full article body", title: "Title", url: "https://a.example/1" };
+    const response = await detectViaBackground(first.listeners, message);
+    const reused = await detectViaBackground(first.listeners, {
+      ...message, title: "Another title", url: "https://b.example/2"
+    });
+    assert.deepEqual(reused, response);
+    assert.equal(calls, 1);
+    assert.doesNotMatch(JSON.stringify(stored.session), /Full article body|private-credential|a\.example/);
+
+    const restarted = environment(false, stored);
+    restarted.context.fetch = () => assert.fail("a restarted background should reuse the session cache");
+    loadBackground(restarted.context, separateWindow);
+    assert.equal((await detectViaBackground(restarted.listeners, message)).data.label, "human");
+  });
+
+  test(`${browser}: cache identity follows full text and detection configuration`, async () => {
+    const stored = { sync: {}, local: { jevApiKey: "key-one" } };
+    const { context, listeners } = environment(false, stored);
+    let calls = 0;
+    context.fetch = async () => { calls++; return jevResponse(); };
+    loadBackground(context, separateWindow);
+    const message = { text: "x".repeat(6000) + "tail one" };
+    await detectViaBackground(listeners, message);
+    await detectViaBackground(listeners, { text: "x".repeat(6000) + "tail two" });
+    assert.equal(calls, 2, "text beyond the API budget still partitions the cache");
+
+    Object.assign(stored.sync, {
+      showBadgePercent: true, minTextLength: 400, whitelist: ["example.com"],
+      contentCategories: [{ id: "news", label: "News", description: "Reporting" }]
+    });
+    await detectViaBackground(listeners, message);
+    assert.equal(calls, 2, "display settings and unused categories do not invalidate results");
+
+    stored.sync.localContent = true;
+    await detectViaBackground(listeners, message);
+    assert.equal(calls, 3);
+    stored.sync.contentCategories[0].description = "First-hand reporting";
+    await detectViaBackground(listeners, message);
+    assert.equal(calls, 4);
+    stored.sync.contentCategories[0].label = "Articles";
+    await detectViaBackground(listeners, message);
+    assert.equal(calls, 5);
+    stored.sync.jevBaseUrl = "https://other.example";
+    await detectViaBackground(listeners, message);
+    assert.equal(calls, 6);
+    stored.local.jevApiKey = "key-two";
+    await detectViaBackground(listeners, message);
+    assert.equal(calls, 7);
+
+    stored.sync.jevBaseUrl += "/";
+    stored.local.jevApiKey = " key-two ";
+    await detectViaBackground(listeners, message);
+    assert.equal(calls, 7, "credentials and base URL use the same trimming as the client");
+
+    stored.local.jevApiKey = "";
+    const missingKey = await detectViaBackground(listeners, message);
+    assert.equal(missingKey.success, false);
+    assert.equal(missingKey.error, "missingJevKey");
+    assert.equal(calls, 7, "old cached results cannot mask removed credentials");
+  });
+
+  test(`${browser}: concurrent identical requests share one fetch and reruns refresh the cache`, async () => {
+    const { context, listeners } = environment(false, { local: { jevApiKey: "key" } });
+    const started = deferred();
+    const release = deferred();
+    const refreshStarted = deferred();
+    const refreshRelease = deferred();
+    let calls = 0;
+    context.fetch = async () => {
+      calls++;
+      if (calls === 1) {
+        started.resolve();
+        await release.promise;
+      }
+      if (calls === 2) {
+        refreshStarted.resolve();
+        await refreshRelease.promise;
+      }
+      return jevResponse(calls === 1 ? 0.1 : 0.9);
+    };
+    loadBackground(context, separateWindow);
+    const joined = keysReady(context, 9);
+    const message = { text: "Same body" };
+    const first = detectViaBackground(listeners, message);
+    await started.promise;
+    // Multiple automatic/manual callers, including different tabs.
+    const requests = Array.from({ length: 8 }, (_, i) => detectViaBackground(listeners, {
+      ...message, url: `https://example.com/${i}`, forceRerun: i % 2 === 0
+    }));
+    await joined;
+    release.resolve();
+    const responses = await Promise.all([first, ...requests]);
+    assert.equal(calls, 1);
+    assert.ok(responses.every(response => response.success && response.data.label === "human"));
+
+    const refreshJoined = keysReady(context, 3);
+    const rerun = detectViaBackground(listeners, { ...message, forceRerun: true });
+    await refreshStarted.promise;
+    const duringRefresh = [
+      detectViaBackground(listeners, message),
+      detectViaBackground(listeners, { ...message, forceRerun: true })
+    ];
+    await refreshJoined;
+    refreshRelease.resolve();
+    const [refreshed, ...joinedResults] = await Promise.all([rerun, ...duringRefresh]);
+    assert.equal(calls, 2);
+    assert.equal(refreshed.data.label, "ai");
+    assert.ok(joinedResults.every(response => response.data.label === "ai"), "callers await the refresh instead of receiving stale cache");
+    const cached = await detectViaBackground(listeners, message);
+    assert.equal(calls, 2);
+    assert.deepEqual(cached, refreshed);
+  });
+
+  test(`${browser}: different bodies and configurations run independently`, async () => {
+    const stored = { sync: {}, local: { jevApiKey: "key" } };
+    const { context, listeners } = environment(false, stored);
+    const firstStarted = deferred();
+    const release = deferred();
+    const payloads = [];
+    context.fetch = async (url, options) => {
+      payloads.push(JSON.parse(options.body));
+      firstStarted.resolve();
+      await release.promise;
+      return jevResponse();
+    };
+    loadBackground(context, separateWindow);
+    const joined = keysReady(context, 3);
+    const first = detectViaBackground(listeners, { text: "body one" });
+    await firstStarted.promise;
+    const second = detectViaBackground(listeners, { text: "body two" });
+    // Wait until the second request has read the previous settings snapshot.
+    await tick();
+    stored.sync.localContent = true;
+    const third = detectViaBackground(listeners, { text: "body one" });
+    await joined;
+    assert.equal(payloads.length, 3);
+    assert.equal(payloads.filter(payload => payload.questions.content_type).length, 1);
+    release.resolve();
+    assert.ok((await Promise.all([first, second, third])).every(response => response.success));
+  });
+
+  test(`${browser}: concurrent failures are shared and failed results can be retried`, async () => {
+    const { context, listeners } = environment(false, { local: { jevApiKey: "key" } });
+    let calls = 0;
+    const release = deferred();
+    context.fetch = async () => {
+      calls++;
+      if (calls === 1) {
+        await release.promise;
+        throw new Error("offline");
+      }
+      return jevResponse();
+    };
+    loadBackground(context, separateWindow);
+    const joined = keysReady(context, 2);
+    const message = { text: "Retry body" };
+    const pending = [detectViaBackground(listeners, message), detectViaBackground(listeners, message)];
+    await joined;
+    release.resolve();
+    const failures = await Promise.all(pending);
+    assert.equal(calls, 1);
+    assert.ok(failures.every(response => !response.success && response.error === "offline"));
+    assert.equal((await detectViaBackground(listeners, message)).success, true);
+    assert.equal(calls, 2);
+  });
+
+  test(`${browser}: cache expires and evicts the least recently used body`, async () => {
+    const { context, listeners, sessionStored } = environment(false, { local: { jevApiKey: "key" } });
+    let now = 1_000_000;
+    context.Date = { now: () => now };
+    let calls = 0;
+    context.fetch = async () => { calls++; return jevResponse(); };
+    loadBackground(context, separateWindow);
+    await detectViaBackground(listeners, { text: "expires" });
+    now += 24 * 60 * 60 * 1000 - 1;
+    await detectViaBackground(listeners, { text: "expires" });
+    assert.equal(calls, 1);
+    now++;
+    await detectViaBackground(listeners, { text: "expires" });
+    assert.equal(calls, 2);
+    for (let i = 0; i < 99; i++) await detectViaBackground(listeners, { text: `body ${i}` });
+    await detectViaBackground(listeners, { text: "expires" });
+    await detectViaBackground(listeners, { text: "one more body" });
+    const before = calls;
+    await detectViaBackground(listeners, { text: "expires" });
+    assert.equal(calls, before, "a recently used entry survives eviction");
+    await detectViaBackground(listeners, { text: "body 0" });
+    assert.equal(calls, before + 1);
+    assert.equal(sessionStored.detectionResultsV1.length, 100);
+  });
+
+  test(`${browser}: session storage failures fall back to memory`, async () => {
+    for (const mode of ["absent", "error", "throw"]) {
+      const { context, listeners } = environment(false, { local: { jevApiKey: "key" } });
+      if (mode === "absent") delete context.chrome.storage.session;
+      if (mode === "error") {
+        const fail = (items, callback) => {
+          context.chrome.runtime.lastError = { message: "storage unavailable" };
+          callback();
+          delete context.chrome.runtime.lastError;
+        };
+        context.chrome.storage.session = { get: fail, set: fail };
+      }
+      if (mode === "throw") {
+        const fail = () => { throw new Error("storage unavailable"); };
+        context.chrome.storage.session = { get: fail, set: fail };
+      }
+      let calls = 0;
+      context.fetch = async () => { calls++; return jevResponse(); };
+      loadBackground(context, separateWindow);
+      assert.equal((await detectViaBackground(listeners, { text: "body" })).success, true);
+      assert.equal((await detectViaBackground(listeners, { text: "body" })).success, true);
+      assert.equal(calls, 1, mode);
+    }
   });
 }

@@ -37,6 +37,7 @@
       "shared/i18n.js",
       "shared/questions.js",
       "shared/jev.js",
+      "background/detection-cache.js",
       "background/service-worker.js"
     ],
     "service_worker": "background/service-worker.js"

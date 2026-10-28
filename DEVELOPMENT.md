@@ -19,10 +19,14 @@ This document covers the browser extension implementation and development workfl
 ## Request flow
 
 1. [`content/content.js`](extension/content/content.js) extracts the article with Readability, applies the domain lists and minimum text length, then sends `DETECT_TEXT` to the background.
-2. [`background/service-worker.js`](extension/background/service-worker.js) reads settings and builds the Jev state and question set.
+2. [`background/service-worker.js`](extension/background/service-worker.js) reads settings, then [`background/detection-cache.js`](extension/background/detection-cache.js) builds the Jev state and question set and checks for a reusable result or request.
 3. [`shared/jev.js`](extension/shared/jev.js) calls `POST /v1/systemone` on the configured Jev server with the API key.
 4. [`shared/questions.js`](extension/shared/questions.js) converts the answers into the badge result shape.
 5. [`content/badge.js`](extension/content/badge.js) renders the result. Clicking the badge opens the detail panel.
+
+The background caches successful results for 24 hours, with at most 100 entries and least recently used eviction. Cache identity is a SHA-256 digest of the **complete extracted body** (before Jev's 6,000-character limit), trimmed server URL and API key, model, and generated question set. Classification toggles, category names and criteria therefore partition results; display preferences and domain rules do not. Titles and page URLs remain in the Jev request but do not partition the cache, allowing identical bodies on different pages to reuse a result. Neither article bodies nor credentials are written into cache storage.
+
+Results use `chrome.storage.session`, so they survive service-worker suspension but are cleared with the browser session. If session storage is unavailable or fails, detection continues with an in-memory cache. Concurrent requests for the same identity share one Jev request; failures are not cached and can be retried. Manual detection sends `forceRerun: true` to skip completed results and replace them on success, while still sharing any matching request already in progress.
 
 When the **Classify content** toggle is on, `questions.forSettings` adds the `content_type` question. It is built from `settings.contentCategories`: each category's name becomes the prompt label and its description becomes the criteria text. The response gains a `content` object whose `label` is the category id and whose `name` is the display name shown in the badge.
 
@@ -50,7 +54,7 @@ Run the Node tests:
 node --test scripts/test_extension.cjs
 ```
 
-The tests cover content-script initialization under both global-scope models, manual detection, and background Jev requests with content classification. They use mocked browser APIs and do not replace a browser smoke test.
+The tests cover content-script initialization under both global-scope models, manual detection, background Jev requests with content classification, cache identity and expiration, session restoration and storage failures, concurrent request sharing, forced refresh, and failure retries. They use mocked browser APIs and do not replace a browser smoke test.
 
 For a manual check, load `extension/` as an unpacked extension in Chrome, or run:
 

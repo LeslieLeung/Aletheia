@@ -47,7 +47,8 @@ var ALETHEIA = globalThis.ALETHEIA || {};
           type: ALETHEIA.MSG.DETECT_TEXT,
           text: text,
           title: article.title || "",
-          url: location.href
+          url: location.href,
+          forceRerun: !!forceRerun
         },
         function (response) {
           if (chrome.runtime.lastError) {
