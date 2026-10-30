@@ -7,7 +7,7 @@ if (typeof importScripts === "function") {
     "../shared/storage.js",
     "../shared/i18n.js",
     "../shared/questions.js",
-    "../shared/jev.js",
+    "../shared/providers.js",
     "detection-cache.js"
   );
 }
@@ -21,6 +21,7 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
     ALETHEIA.storage.get().then(function (settings) {
       var shared = Object.assign({}, settings);
       delete shared.jevApiKey;
+      delete shared.providerApiKeys;
       sendResponse({ enabled: settings.enabled, settings: shared });
     });
     return true;

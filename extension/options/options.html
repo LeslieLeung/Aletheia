@@ -19,25 +19,44 @@
 
     <section class="card">
       <div class="card-head">
-        <h2 data-i18n="jevConnection">Jev connection</h2>
+        <h2 data-i18n="modelConnection">Model connection</h2>
         <span id="connectionBadge" class="pill" hidden></span>
       </div>
       <div class="field">
-        <label for="jevBaseUrl" data-i18n="jevBaseUrl">Jev server</label>
-        <input type="text" id="jevBaseUrl" placeholder="https://api.typesafe.ai" spellcheck="false">
-        <p class="field-hint" data-i18n="jevBaseHint">API root, for example https://api.typesafe.ai.</p>
+        <label for="modelProvider" data-i18n="modelProvider">Provider</label>
+        <select id="modelProvider">
+          <option value="jev">Jev</option>
+          <option value="clef">Clef (Cloudflare)</option>
+          <option value="laya">Laya</option>
+        </select>
+        <p class="field-hint" id="providerHint"></p>
       </div>
       <div class="field">
-        <label for="jevApiKey" data-i18n="jevApiKey">API key</label>
+        <label for="modelId" data-i18n="modelId">Model</label>
+        <input type="text" id="modelId" list="modelSuggestions" spellcheck="false" autocomplete="off">
+        <datalist id="modelSuggestions"></datalist>
+      </div>
+      <div class="field" id="baseUrlField">
+        <label for="providerBaseUrl" data-i18n="providerBaseUrl">Server URL</label>
+        <input type="text" id="providerBaseUrl" spellcheck="false">
+        <p class="field-hint" data-i18n="providerBaseHint">API root, such as https://api.typesafe.ai or http://localhost:8000.</p>
+      </div>
+      <div class="field" id="accountIdField" hidden>
+        <label for="clefAccountId" data-i18n="clefAccountId">Cloudflare account ID</label>
+        <input type="text" id="clefAccountId" spellcheck="false" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="providerApiKey" id="apiKeyLabel" data-i18n="providerApiKey">API key / token</label>
         <div class="input-group">
-          <input type="password" id="jevApiKey" autocomplete="off" spellcheck="false" data-i18n-placeholder="jevKeyPlaceholder">
+          <input type="password" id="providerApiKey" autocomplete="off" spellcheck="false">
           <button type="button" id="toggleKeyBtn" class="icon-btn" data-i18n-title="showKey" aria-pressed="false">
             <svg class="eye-open" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/></svg>
             <svg class="eye-closed" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.6 6.6C3.8 8.4 2 12 2 12s3.5 7 10 7c1.7 0 3.2-.5 4.5-1.2M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
           </button>
         </div>
-        <p class="field-hint" data-i18n="jevApiKeyHint">Stored only in this browser's local extension storage.</p>
+        <p class="field-hint" data-i18n="providerApiKeyHint">Stored only in this browser's local extension storage. Optional for Laya unless your server requires authentication.</p>
       </div>
+      <p class="field-hint" data-i18n="connectionTestHint">Clef and Laya connection tests run a small inference request. Clef may charge for it; Laya's first request may load the model.</p>
       <div class="field test-row">
         <button type="button" id="testBtn" class="btn btn-secondary">
           <span class="btn-spinner" aria-hidden="true"></span>
@@ -62,7 +81,7 @@
         </span>
       </label>
       <div id="classifyConfig" class="classify-config" hidden>
-        <p class="field-hint" data-i18n="contentCategoriesHint">These categories and descriptions are sent to Jev as the classification prompt. Add or remove categories to match what you want to detect.</p>
+        <p class="field-hint" data-i18n="contentCategoriesHint">These categories and descriptions are sent to your selected model as the classification prompt. Add or remove categories to match what you want to detect.</p>
         <div class="category-list" id="categoryList"></div>
         <div class="category-footer">
           <button type="button" id="addCategoryBtn" class="btn btn-ghost btn-sm">
@@ -146,7 +165,7 @@
   <script src="../shared/storage.js"></script>
   <script src="../shared/i18n.js"></script>
   <script src="../shared/questions.js"></script>
-  <script src="../shared/jev.js"></script>
+  <script src="../shared/providers.js"></script>
   <script src="options.js"></script>
 </body>
 </html>

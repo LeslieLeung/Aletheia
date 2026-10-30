@@ -2,7 +2,7 @@
 
 [简体中文](README_zh.md) · [Development](DEVELOPMENT.md)
 
-Aletheia is a browser extension that checks whether article text looks AI-generated. It can optionally classify the page using categories you define (original, repost, and ad by default). The extension calls the [Jev](https://docs.typesafe.ai/introduction) decision engine directly with your own API key; there is no separate server component.
+Aletheia is a browser extension that checks whether article text looks AI-generated. It can optionally classify the page using categories you define (original, repost, and ad by default). The extension connects directly to [Jev](https://docs.typesafe.ai/introduction), [Clef / Clef-flash on Cloudflare Workers AI](https://developers.cloudflare.com/workers-ai/models/clef/), or your own [Laya](https://github.com/NandhaKishorM/laya) server.
 
 ## Install
 
@@ -22,11 +22,23 @@ Firefox:
 
 Open the extension and click **Settings**.
 
-1. Enter your Jev server URL (for example `https://api.typesafe.ai`) and API key.
-2. Click **Test Connection** to verify access.
+1. Choose a provider and configure its connection:
+   - **Jev**: enter the server URL (default `https://api.typesafe.ai`), API key and model (default `jev-latest`). Existing Jev settings are used automatically.
+   - **Clef (Cloudflare)**: enter your 32-character Cloudflare account ID and a [Workers AI API token](https://developers.cloudflare.com/workers-ai/get-started/rest-api/). Choose `clef-flash` (default) or `clef`. The extension calls Workers AI directly.
+   - **Laya**: enter your `laya-serve` URL (default `http://localhost:8000`). The default model is `multilingual`; `english`, `typed-decisions`, and server-registered model names can also be entered. Leave the key empty unless your server enables `LAYA_API_KEY`.
+2. Click **Test Connection** to verify access. Jev lists available models; Clef and Laya run a small inference request. Clef may charge for that request, and Laya may need to load its model on first use.
 3. Turn on **Classify content** if you also want a content label. Edit the default original, repost, and ad categories, or add your own.
 
-The API key is stored only in the browser's local extension storage. Page text, title, and URL are sent only to the Jev server you configure, and only when detection runs. Other preferences may sync through your browser account.
+Each provider keeps its own connection settings. API keys and tokens are stored only in the browser's local extension storage. Page text, title, and URL are sent to the selected provider when detection runs. Other preferences may sync through your browser account. Local Laya addresses refer to the machine running your browser.
+
+To start a local Laya server:
+
+```bash
+pip install "laya[serve]"
+LAYA_MODELS=multilingual laya-serve
+```
+
+The extension requests an 8,192-token window for `multilingual` so longer articles are not limited to Laya's default 1,024 tokens. It still sends at most 6,000 article characters. Laya requests time out after 60 seconds; if the first connection test times out while loading weights, retry after the server is ready.
 
 ## Use
 
@@ -36,7 +48,7 @@ The popup also shows the current site with two shortcuts: **Always detect** adds
 
 In **Settings**, you can also adjust:
 
-- the content categories and the descriptions sent to Jev as the classification prompt;
+- the content categories and the descriptions sent to the selected model as the classification prompt;
 - whether the badge shows the percentage;
 - the minimum text length for automatic detection;
 - the domain whitelist and blacklist. Add one or more domains or URLs at a time, search the list, switch a domain between the two lists, or remove it.
@@ -45,7 +57,7 @@ Whitelisted domains are always detected, blacklisted domains are always skipped,
 
 ## Privacy
 
-Page text, title, and URL are sent only to the Jev server you configure, and only when detection runs. The common tracking-heavy sites in the default blacklist are skipped automatically.
+Page text, title, and URL are sent only to the selected provider, and only when detection runs. The common tracking-heavy sites in the default blacklist are skipped automatically.
 
 ## Development
 

@@ -2,7 +2,7 @@
 
 [English](README.md) · [开发文档（英文）](DEVELOPMENT.md)
 
-Aletheia 是一个浏览器扩展，可以判断文章文本是否疑似由 AI 生成，也可以选择按你自定义的类别给页面分类（默认是**原创**、**搬运**、**广告**）。扩展会使用你自己的 API key 直接调用 [Jev](https://docs.typesafe.ai/introduction) 决策引擎，不再需要单独的服务端。
+Aletheia 是一个浏览器扩展，可以判断文章文本是否疑似由 AI 生成，也可以选择按你自定义的类别给页面分类（默认是**原创**、**搬运**、**广告**）。扩展可直接连接 [Jev](https://docs.typesafe.ai/introduction)、[Cloudflare Workers AI 上的 Clef / Clef-flash](https://developers.cloudflare.com/workers-ai/models/clef/)，或你自行部署的 [Laya](https://github.com/NandhaKishorM/laya) 服务。
 
 ## 安装
 
@@ -22,11 +22,23 @@ Firefox：
 
 打开扩展，点击**设置**。
 
-1. 填写 Jev 服务器地址（例如 `https://api.typesafe.ai`）和 API key。
-2. 点击**测试连接**确认可用。
+1. 选择模型服务并填写对应配置：
+   - **Jev**：服务器地址默认 `https://api.typesafe.ai`，填写 API key，模型默认 `jev-latest`。已有 Jev 配置会自动沿用。
+   - **Clef (Cloudflare)**：填写 32 位 Cloudflare 账户 ID 和 [Workers AI API token](https://developers.cloudflare.com/workers-ai/get-started/rest-api/)，模型可选 `clef-flash`（默认）或 `clef`。扩展直接调用 Workers AI。
+   - **Laya**：填写 `laya-serve` 地址，默认 `http://localhost:8000`。模型默认 `multilingual`，也可填写 `english`、`typed-decisions` 或服务端注册的模型名。服务端未启用 `LAYA_API_KEY` 时，key 可以留空。
+2. 点击**测试连接**确认可用。Jev 会查询模型列表；Clef 和 Laya 会执行一次小型推理请求，Clef 可能计费，Laya 首次请求可能需要加载模型。
 3. 如需同时显示内容分类，打开**内容分类**开关。可以修改默认的原创、搬运、广告类别，也可以自行增删类别。
 
-API key 只保存在浏览器的本地扩展存储中。只有在执行检测时，页面文本、标题和 URL 才会发送到你配置的 Jev 服务器。其他偏好设置可能会通过浏览器账号同步。
+各模型服务分别保存连接配置。API key 和 token 只保存在浏览器的本地扩展存储中。执行检测时，页面文本、标题和 URL 会发送到当前选择的模型服务。其他偏好设置可能会通过浏览器账号同步。Laya 的 localhost 地址指运行浏览器的机器。
+
+启动本地 Laya 服务：
+
+```bash
+pip install "laya[serve]"
+LAYA_MODELS=multilingual laya-serve
+```
+
+扩展对 `multilingual` 请求 8,192 token 的窗口，避免长文章被 Laya 默认的 1,024 token 限制截断；文章正文仍最多发送 6,000 个字符。Laya 请求超时为 60 秒，如果首次测试因下载或加载模型超时，待服务就绪后重试。
 
 ## 使用
 
@@ -36,7 +48,7 @@ API key 只保存在浏览器的本地扩展存储中。只有在执行检测时
 
 在**设置**中还可以调整：
 
-- 内容分类的类别和描述，它们会作为分类 prompt 发送给 Jev；
+- 内容分类的类别和描述，它们会作为分类 prompt 发送给当前模型；
 - 徽章是否显示百分比；
 - 自动检测所需的最小文本长度；
 - 域名白名单和黑名单。可以一次添加一个或多个域名/网址，搜索列表，在两个列表之间切换域名，或直接移除。
@@ -45,7 +57,7 @@ API key 只保存在浏览器的本地扩展存储中。只有在执行检测时
 
 ## 隐私
 
-只有在执行检测时，页面文本、标题和 URL 才会发送到你配置的 Jev 服务器。默认黑名单已经跳过常见的跟踪、社交和视频站点。
+只有在执行检测时，页面文本、标题和 URL 才会发送到当前选择的模型服务。默认黑名单已经跳过常见的跟踪、社交和视频站点。
 
 ## 开发
 

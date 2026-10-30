@@ -34,9 +34,13 @@ function environment(separateWindow, stored) {
         sync: {
           get(defaults, callback) {
             callback({ ...defaults, blacklist: ["example.com"], ...syncStored });
-          }
+          },
+          set(items, callback) { Object.assign(syncStored, structuredClone(items)); callback(); }
         },
-        local: { get: (defaults, callback) => callback({ ...defaults, ...localStored }) },
+        local: {
+          get: (defaults, callback) => callback({ ...defaults, ...localStored }),
+          set(items, callback) { Object.assign(localStored, structuredClone(items)); callback(); }
+        },
         session: {
           get(key, callback) { callback(structuredClone(sessionStored)); },
           set(items, callback) {
@@ -111,8 +115,10 @@ test("settings own credentials and the popup stays a quick action", () => {
   const optionsHtml = fs.readFileSync(path.join(extensionDir, "options/options.html"), "utf8");
   const popupHtml = fs.readFileSync(path.join(extensionDir, "popup/popup.html"), "utf8");
 
-  assert.match(optionsHtml, /id="jevBaseUrl"/);
-  assert.match(optionsHtml, /id="jevApiKey"/);
+  assert.match(optionsHtml, /id="providerBaseUrl"/);
+  assert.match(optionsHtml, /id="providerApiKey"/);
+  assert.match(optionsHtml, /id="modelProvider"/);
+  assert.match(optionsHtml, /id="clefAccountId"/);
   assert.match(optionsHtml, /class="toggle-row"[\s\S]*id="localContent"/);
   assert.match(optionsHtml, /id="classifyConfig"[\s\S]*id="categoryList"[\s\S]*id="addCategoryBtn"/);
   assert.match(optionsHtml, /id="domainInput"[\s\S]*id="domainSearch"[\s\S]*id="domainItems"/);
@@ -122,6 +128,206 @@ test("settings own credentials and the popup stays a quick action", () => {
   assert.match(popupHtml, /class="toggle"[\s\S]*id="localContent"/);
   assert.match(popupHtml, /id="siteRule"[\s\S]*id="allowSiteBtn"[\s\S]*id="blockSiteBtn"/);
   assert.doesNotMatch(popupHtml, /jevBaseUrl|jevApiKey|apiUrl|modeServer|modeLocal|categoryList|addCategoryBtn/);
+});
+
+test("provider credentials stay local and are excluded from status messages", async () => {
+  const stored = { sync: {}, local: {} };
+  const { context, listeners } = environment(false, stored);
+  loadBackground(context, false);
+  await context.ALETHEIA.storage.set({
+    modelProvider: "clef", providerConfigs: { clef: { accountId: "a".repeat(32), model: "clef" } },
+    providerApiKeys: { clef: "private-clef-token", laya: "private-laya-key" }, jevApiKey: "legacy-key"
+  });
+  assert.doesNotMatch(JSON.stringify(stored.sync), /private-|legacy-key|providerApiKeys|jevApiKey/);
+  assert.equal(stored.local.providerApiKeys.clef, "private-clef-token");
+  const loaded = await context.ALETHEIA.storage.get();
+  assert.equal(loaded.providerApiKeys.laya, "private-laya-key");
+  const response = await new Promise(resolve => listeners[0]({ type: "GET_STATUS" }, {}, resolve));
+  assert.doesNotMatch(JSON.stringify(response), /private-|legacy-key|providerApiKeys|jevApiKey/);
+  assert.equal(response.settings.modelProvider, "clef");
+});
+
+test("new Jev profiles override legacy settings, including an explicitly removed key", () => {
+  const { context } = environment(false);
+  loadBackground(context, false);
+  const providers = context.ALETHEIA.providers;
+  const legacy = { jevBaseUrl: " https://legacy.example/ ", jevApiKey: " old-key " };
+  assert.equal(providers.config(legacy).baseUrl, "https://legacy.example");
+  assert.equal(providers.config(legacy).apiKey, "old-key");
+  const migrated = {
+    ...legacy, providerConfigs: { jev: { baseUrl: "https://new.example/v1", model: "jev-1.13.0" } },
+    providerApiKeys: { jev: "" }
+  };
+  assert.equal(providers.config(migrated).model, "jev-1.13.0");
+  assert.equal(providers.isConfigured(migrated), false);
+  assert.throws(() => providers.validate(migrated), /missingApiKey/);
+  assert.equal(providers.validate(migrated, { allowMissingKey: true }).baseUrl, "https://new.example/v1");
+});
+
+test("provider validation rejects unknown services, invalid URLs and unsupported Clef models before fetching", async () => {
+  const { context } = environment(false);
+  loadBackground(context, false);
+  context.fetch = () => assert.fail("invalid configuration must not send a request");
+  const providers = context.ALETHEIA.providers;
+  const cases = [
+    [{ modelProvider: "unknown" }, /unknownProvider/],
+    [{ modelProvider: "constructor" }, /unknownProvider/],
+    [{ modelProvider: "laya", providerConfigs: { laya: { baseUrl: "file:///tmp/model" } } }, /urlMustHttp/],
+    [{ modelProvider: "laya", providerConfigs: { laya: { baseUrl: "https://user:pass@example.com" } } }, /invalidUrl/],
+    [{ modelProvider: "laya", providerConfigs: { laya: { baseUrl: "https://example.com?key=secret" } } }, /invalidUrl/],
+    [{ modelProvider: "clef", providerApiKeys: { clef: "key" } }, /invalidAccountId/],
+    [{ modelProvider: "clef", providerConfigs: { clef: { accountId: "a".repeat(32), model: "jev-latest" } } }, /invalidClefModel/]
+  ];
+  for (const [settings, error] of cases) {
+    assert.equal(providers.isConfigured(settings), false);
+    await assert.rejects(providers.test(settings), error);
+  }
+});
+
+for (const separateWindow of [true, false]) {
+  const browser = separateWindow ? "Firefox" : "Chrome";
+  test(`${browser}: Clef calls Workers AI with the selected model and unwraps its result`, async () => {
+    const accountId = "a".repeat(32);
+    const stored = {
+      sync: { modelProvider: "clef", localContent: true, providerConfigs: { clef: { accountId, model: "clef" } } },
+      local: { providerApiKeys: { clef: " cf-token ", jev: "unrelated-key" } }
+    };
+    const { context, listeners } = environment(false, stored);
+    context.fetch = async (url, options) => {
+      assert.equal(url, `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/@cf/cloudflare/clef`);
+      assert.equal(options.headers.Authorization, "Bearer cf-token");
+      const body = JSON.parse(options.body);
+      assert.equal(body.model, "clef");
+      assert.equal(body.questions.content_type.type, "choice");
+      assert.equal(body.state.text.length, 6000);
+      return { ok: true, json: async () => ({
+        success: true, result: { model: "clef", answers: {
+          ai_generated: { noul: 0.8 },
+          content_type: { choice: "ad", probabilities: { ad: 0.7, original: 0.2, repost: 0.1 } }
+        } }
+      }) };
+    };
+    loadBackground(context, separateWindow);
+    const response = await detectViaBackground(listeners, { text: "x".repeat(7000) });
+    assert.equal(response.success, true);
+    assert.equal(response.data.detector, "clef");
+    assert.equal(response.data.model_id, "clef");
+    assert.equal(response.data.score, 0.8);
+    assert.equal(response.data.content.label, "ad");
+    assert.equal(response.data.content.confidence, 0.7);
+  });
+
+  test(`${browser}: Laya supports optional auth, multilingual context and custom server prefixes`, async () => {
+    const stored = { sync: {
+      modelProvider: "laya", providerConfigs: { laya: { baseUrl: "http://localhost:8000/laya/v1/" } }
+    }, local: { providerApiKeys: {} } };
+    const { context, listeners } = environment(false, stored);
+    const requests = [];
+    context.fetch = async (url, options) => {
+      requests.push({ url, ...options, body: JSON.parse(options.body) });
+      return jevResponse(0.3);
+    };
+    loadBackground(context, separateWindow);
+    const settings = await context.ALETHEIA.storage.get();
+    assert.equal(context.ALETHEIA.providers.isConfigured(settings), true, "keyless Laya is ready in the popup");
+    const response = await detectViaBackground(listeners, { text: "中文文章" });
+    assert.equal(response.data.detector, "laya");
+    assert.equal(response.data.model_id, "multilingual");
+    assert.equal(requests[0].url, "http://localhost:8000/laya/v1/systemone");
+    assert.equal("Authorization" in requests[0].headers, false);
+    assert.equal(requests[0].body.max_len, 8192);
+    stored.local.providerApiKeys.laya = " local-key ";
+    stored.sync.providerConfigs.laya.model = "english";
+    await detectViaBackground(listeners, { text: "English article" });
+    assert.equal(requests[1].headers.Authorization, "Bearer local-key");
+    assert.equal(requests[1].body.model, "english");
+    assert.equal("max_len" in requests[1].body, false);
+  });
+
+  test(`${browser}: caches separate services, models, accounts and keys but ignore inactive profiles`, async () => {
+    const stored = { sync: { providerConfigs: {
+      jev: { baseUrl: "https://shared.example", model: "shared" },
+      laya: { baseUrl: "https://shared.example", model: "shared" },
+      clef: { accountId: "a".repeat(32), model: "clef-flash" }
+    } }, local: { providerApiKeys: { jev: "key", laya: "key", clef: "key" } }, session: {} };
+    const { context, listeners } = environment(false, stored);
+    let calls = 0;
+    context.fetch = async () => { calls++; return jevResponse(); };
+    loadBackground(context, separateWindow);
+    const message = { text: "body" };
+    await detectViaBackground(listeners, message);
+    stored.sync.modelProvider = "laya";
+    await detectViaBackground(listeners, message);
+    assert.equal(calls, 2, "same endpoint/model/key on another provider must not collide");
+    stored.sync.providerConfigs.laya.model = "multilingual";
+    await detectViaBackground(listeners, message);
+    assert.equal(calls, 3);
+    stored.sync.modelProvider = "clef";
+    await detectViaBackground(listeners, message);
+    stored.sync.providerConfigs.clef.accountId = "b".repeat(32);
+    await detectViaBackground(listeners, message);
+    stored.local.providerApiKeys.clef = "new-key";
+    await detectViaBackground(listeners, message);
+    assert.equal(calls, 6);
+    stored.local.providerApiKeys.laya = "inactive-key";
+    await detectViaBackground(listeners, message);
+    assert.equal(calls, 6);
+    stored.sync.modelProvider = "jev";
+    await detectViaBackground(listeners, message);
+    assert.equal(calls, 6, "switching back can reuse the previous provider's result");
+    assert.doesNotMatch(JSON.stringify(stored.session), /shared\.example|new-key|inactive-key|"body"/);
+  });
+}
+
+test("connection tests use Jev's model list and real inference for Clef and Laya", async () => {
+  const { context } = environment(false);
+  loadBackground(context, false);
+  const providers = context.ALETHEIA.providers;
+  const requests = [];
+  context.fetch = async (url, options) => {
+    requests.push({ url, ...options });
+    return options.method === "GET" ? { ok: true, json: async () => ({ data: [] }) } : jevResponse();
+  };
+  await providers.test({ jevBaseUrl: "https://jev.example/v1/systemone/", jevApiKey: "key" });
+  assert.equal(requests[0].url, "https://jev.example/v1/models");
+  assert.equal(requests[0].method, "GET");
+  await providers.test({ modelProvider: "clef", providerConfigs: { clef: { accountId: "a".repeat(32) } }, providerApiKeys: { clef: "key" } });
+  assert.match(requests[1].url, /clef-flash$/);
+  assert.equal(JSON.parse(requests[1].body).model, "clef-flash");
+  await providers.test({ modelProvider: "laya" });
+  assert.equal(requests[2].url, "http://localhost:8000/v1/systemone");
+  assert.equal(requests[2].method, "POST");
+  assert.equal("Authorization" in requests[2].headers, false);
+  context.fetch = async () => ({ ok: true, json: async () => ({ answers: {} }) });
+  await assert.rejects(providers.test({ modelProvider: "laya" }), /missingAiJudgment/);
+});
+
+test("provider errors and invalid probabilities fail detection and never enter the cache", async () => {
+  const { context, listeners } = environment(false, { sync: {
+    modelProvider: "clef", providerConfigs: { clef: { accountId: "a".repeat(32) } }
+  }, local: { providerApiKeys: { clef: "key" } } });
+  loadBackground(context, false);
+  const cases = [
+    [{ ok: false, status: 401 }, "providerAuthFailed"],
+    [{ ok: false, status: 403 }, "providerAuthFailed"],
+    [{ ok: false, status: 429, text: async () => JSON.stringify({ errors: [{ message: "Rate limit" }] }) }, "Rate limit"],
+    [{ ok: false, status: 500, text: async () => "Server unavailable" }, "Server unavailable"],
+    [{ ok: true, json: async () => ({ success: false, errors: [{ message: "Model unavailable" }] }) }, "Model unavailable"],
+    [{ ok: true, json: async () => ({ result: {} }) }, "missingAiJudgment"],
+    ...[-0.1, 1.1, null, "0.9"].map(noul => [
+      { ok: true, json: async () => ({ result: { answers: { ai_generated: { noul } } } }) }, "missingAiJudgment"
+    ])
+  ];
+  let calls = 0;
+  for (const [response, error] of cases) {
+    context.fetch = async () => { calls++; return response; };
+    const result = await detectViaBackground(listeners, { text: "same retry body" });
+    assert.equal(result.success, false);
+    assert.equal(result.error, error);
+  }
+  assert.equal(calls, cases.length);
+  context.fetch = async () => jevResponse();
+  assert.equal((await detectViaBackground(listeners, { text: "same retry body" })).success, true);
 });
 
 test("domain rules accept URLs and let the whitelist win", () => {
@@ -212,7 +418,7 @@ for (const separateWindow of [true, false]) {
     };
     loadBackground(context, separateWindow);
     assert.equal(typeof context.ALETHEIA.questions.buildState, "function");
-    assert.equal(typeof context.ALETHEIA.jev.detect, "function");
+    assert.equal(typeof context.ALETHEIA.providers.detect, "function");
     const response = await detectViaBackground(listeners, {
       text: "Article",
       title: "Title",
@@ -354,7 +560,7 @@ for (const separateWindow of [true, false]) {
     stored.local.jevApiKey = "";
     const missingKey = await detectViaBackground(listeners, message);
     assert.equal(missingKey.success, false);
-    assert.equal(missingKey.error, "missingJevKey");
+    assert.equal(missingKey.error, "missingApiKey");
     assert.equal(calls, 7, "old cached results cannot mask removed credentials");
   });
 

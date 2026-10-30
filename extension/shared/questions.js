@@ -14,7 +14,7 @@ ALETHEIA.questions = (function () {
   });
 
   // Built-in categories. Labels follow the UI language; descriptions are the
-  // exact wording sent to Jev.
+  // exact wording sent to the selected model.
   var DEFAULT_CATEGORIES = Object.freeze([
     Object.freeze({
       id: "original",
@@ -82,7 +82,7 @@ ALETHEIA.questions = (function () {
     return labels.slice(0, -1).join(", ") + ", or " + labels[labels.length - 1];
   }
 
-  // Renders the user's categories into the Jev choice question. The criteria
+  // Renders the user's categories into a System One choice question. The criteria
   // keys are the stored category ids; the values are the prompt text.
   function contentTypeFor(categories) {
     var criteria = {};
@@ -142,7 +142,7 @@ ALETHEIA.questions = (function () {
 
   function toDetectResponse(engineName, modelId, answers, categories) {
     var noul = answers && answers.ai_generated;
-    if (!noul || typeof noul.noul !== "number") {
+    if (!noul || !Number.isFinite(noul.noul) || noul.noul < 0 || noul.noul > 1) {
       throw new Error(ALETHEIA.t("missingAiJudgment"));
     }
     var probability = noul.noul;

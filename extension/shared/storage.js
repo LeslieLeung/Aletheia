@@ -1,6 +1,6 @@
 var ALETHEIA = globalThis.ALETHEIA || {};
 
-var LOCAL_KEYS = { jevApiKey: true };
+var LOCAL_KEYS = { jevApiKey: true, providerApiKeys: true };
 
 function storageError(reject) {
   if (chrome.runtime.lastError) {
@@ -14,8 +14,9 @@ ALETHEIA.storage = {
   get: function () {
     return new Promise(function (resolve) {
       chrome.storage.sync.get(ALETHEIA.DEFAULTS, function (items) {
-        chrome.storage.local.get({ jevApiKey: "" }, function (localItems) {
+        chrome.storage.local.get({ jevApiKey: "", providerApiKeys: {} }, function (localItems) {
           items.jevApiKey = localItems.jevApiKey || "";
+          items.providerApiKeys = localItems.providerApiKeys || {};
           resolve(items);
         });
       });

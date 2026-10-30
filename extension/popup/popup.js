@@ -148,7 +148,7 @@
   }
 
   function isConfigured(settings) {
-    return !!(settings.jevBaseUrl && settings.jevApiKey);
+    return ALETHEIA.providers.isConfigured(settings);
   }
 
   function openOptions() {

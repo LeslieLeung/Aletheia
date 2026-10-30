@@ -11,7 +11,7 @@
     "message": "AI Text Detector"
   },
   "setupRequired": {
-    "message": "Set your Jev server and API key in Settings first."
+    "message": "Configure your model provider in Settings first."
   },
   "detectNow": {
     "message": "Detect Now"
@@ -43,24 +43,6 @@
   "optionsSubtitle": {
     "message": "Configure the AI Text Detector extension."
   },
-  "jevConnection": {
-    "message": "Jev connection"
-  },
-  "jevBaseUrl": {
-    "message": "Jev server"
-  },
-  "jevBaseHint": {
-    "message": "API root, for example https://api.typesafe.ai."
-  },
-  "jevApiKey": {
-    "message": "API key"
-  },
-  "jevKeyPlaceholder": {
-    "message": "API key"
-  },
-  "jevApiKeyHint": {
-    "message": "Stored only in this browser's local extension storage."
-  },
   "testConnection": {
     "message": "Test Connection"
   },
@@ -89,7 +71,7 @@
     "message": "Also label the page with your content categories."
   },
   "contentCategoriesHint": {
-    "message": "These categories and descriptions are sent to Jev as the classification prompt. Add or remove categories to match what you want to detect."
+    "message": "These categories and descriptions are sent to your selected model as the classification prompt. Add or remove categories to match what you want to detect."
   },
   "promptLabel": {
     "message": "Prompt"
@@ -250,15 +232,6 @@
   "networkError": {
     "message": "Network error"
   },
-  "missingJevKey": {
-    "message": "Enter the Jev API key"
-  },
-  "missingJevUrl": {
-    "message": "Enter the Jev server URL"
-  },
-  "jevAuthFailed": {
-    "message": "Jev rejected the API key"
-  },
   "missingAiJudgment": {
     "message": "The model did not return an AI judgment"
   },
@@ -309,5 +282,59 @@
   },
   "close": {
     "message": "Close"
+  },
+  "modelConnection": {
+    "message": "Model connection"
+  },
+  "modelProvider": {
+    "message": "Provider"
+  },
+  "modelId": {
+    "message": "Model"
+  },
+  "providerBaseUrl": {
+    "message": "Server URL"
+  },
+  "providerBaseHint": {
+    "message": "API root, such as https://api.typesafe.ai or http://localhost:8000."
+  },
+  "clefAccountId": {
+    "message": "Cloudflare account ID"
+  },
+  "cloudflareApiToken": {
+    "message": "Cloudflare API token"
+  },
+  "providerApiKey": {
+    "message": "API key / token"
+  },
+  "providerApiKeyHint": {
+    "message": "Stored only in this browser’s local extension storage. Optional for Laya unless your server requires authentication."
+  },
+  "connectionTestHint": {
+    "message": "Clef and Laya connection tests run a small inference request. Clef may charge for it; Laya’s first request may load the model."
+  },
+  "jevProviderHint": {
+    "message": "TypeSafe decision model. Enter your server URL and API key. You can also enter a pinned model version."
+  },
+  "clefProviderHint": {
+    "message": "Cloudflare Workers AI. Enter your account ID and a Workers AI API token. Choose clef-flash or clef."
+  },
+  "layaProviderHint": {
+    "message": "Connect to your own laya-serve instance. The multilingual model is recommended for Chinese and mixed-language pages."
+  },
+  "unknownProvider": {
+    "message": "Unknown model provider"
+  },
+  "missingApiKey": {
+    "message": "Enter the API key / token"
+  },
+  "invalidAccountId": {
+    "message": "Enter a valid 32-character Cloudflare account ID"
+  },
+  "invalidClefModel": {
+    "message": "Choose clef or clef-flash"
+  },
+  "providerAuthFailed": {
+    "message": "The model provider rejected the API key / token"
   }
 }
