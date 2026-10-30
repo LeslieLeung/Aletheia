@@ -11,7 +11,7 @@
     "message": "AI 文本检测"
   },
   "setupRequired": {
-    "message": "请先在设置中填写 Jev 服务器地址和 API key。"
+    "message": "请先在设置中配置模型服务。"
   },
   "detectNow": {
     "message": "立即检测"
@@ -43,24 +43,6 @@
   "optionsSubtitle": {
     "message": "配置 AI 文本检测扩展。"
   },
-  "jevConnection": {
-    "message": "Jev 连接"
-  },
-  "jevBaseUrl": {
-    "message": "Jev 服务器"
-  },
-  "jevBaseHint": {
-    "message": "API 根地址，例如 https://api.typesafe.ai。"
-  },
-  "jevApiKey": {
-    "message": "API key"
-  },
-  "jevKeyPlaceholder": {
-    "message": "API key"
-  },
-  "jevApiKeyHint": {
-    "message": "仅保存在当前浏览器的本地扩展存储中。"
-  },
   "testConnection": {
     "message": "测试连接"
   },
@@ -89,7 +71,7 @@
     "message": "同时用你设置的内容分类标注页面。"
   },
   "contentCategoriesHint": {
-    "message": "这些类别和描述会作为分类 prompt 发送给 Jev，可以按需增减类别。"
+    "message": "这些类别和描述会作为分类 prompt 发送给当前选择的模型，可以按需增减类别。"
   },
   "promptLabel": {
     "message": "Prompt"
@@ -250,15 +232,6 @@
   "networkError": {
     "message": "网络错误"
   },
-  "missingJevKey": {
-    "message": "请填写 Jev API key"
-  },
-  "missingJevUrl": {
-    "message": "请填写 Jev 服务器地址"
-  },
-  "jevAuthFailed": {
-    "message": "Jev 拒绝了这个 API key"
-  },
   "missingAiJudgment": {
     "message": "模型没有返回 AI 判断"
   },
@@ -309,5 +282,59 @@
   },
   "close": {
     "message": "关闭"
+  },
+  "modelConnection": {
+    "message": "模型连接"
+  },
+  "modelProvider": {
+    "message": "模型服务"
+  },
+  "modelId": {
+    "message": "模型"
+  },
+  "providerBaseUrl": {
+    "message": "服务器地址"
+  },
+  "providerBaseHint": {
+    "message": "填写 API 根地址，例如 https://api.typesafe.ai 或 http://localhost:8000。"
+  },
+  "clefAccountId": {
+    "message": "Cloudflare 账户 ID"
+  },
+  "cloudflareApiToken": {
+    "message": "Cloudflare API token"
+  },
+  "providerApiKey": {
+    "message": "API key / token"
+  },
+  "providerApiKeyHint": {
+    "message": "仅保存在此浏览器的本地扩展存储中。Laya 服务未启用鉴权时可以留空。"
+  },
+  "connectionTestHint": {
+    "message": "Clef 和 Laya 的连接测试会执行一次小型推理请求。Clef 可能计费；Laya 首次请求可能需要加载模型。"
+  },
+  "jevProviderHint": {
+    "message": "TypeSafe 决策模型。填写服务器地址和 API key，也可以使用固定版本的模型名。"
+  },
+  "clefProviderHint": {
+    "message": "使用 Cloudflare Workers AI，填写账户 ID 和 Workers AI API token。模型可选 clef-flash 或 clef。"
+  },
+  "layaProviderHint": {
+    "message": "连接自行部署的 laya-serve 服务。中文和中英文混合页面推荐使用 multilingual 模型。"
+  },
+  "unknownProvider": {
+    "message": "未知的模型服务"
+  },
+  "missingApiKey": {
+    "message": "请填写 API key / token"
+  },
+  "invalidAccountId": {
+    "message": "请填写有效的 32 位 Cloudflare 账户 ID"
+  },
+  "invalidClefModel": {
+    "message": "请选择 clef 或 clef-flash"
+  },
+  "providerAuthFailed": {
+    "message": "模型服务拒绝了这个 API key / token"
   }
 }

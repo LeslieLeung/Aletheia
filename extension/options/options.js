@@ -5,8 +5,11 @@
   var testLabel = document.getElementById("testLabel");
   var testStatus = document.getElementById("testStatus");
   var connectionBadge = document.getElementById("connectionBadge");
-  var jevBaseUrlEl = document.getElementById("jevBaseUrl");
-  var jevApiKeyEl = document.getElementById("jevApiKey");
+  var providerEl = document.getElementById("modelProvider");
+  var modelEl = document.getElementById("modelId");
+  var baseUrlEl = document.getElementById("providerBaseUrl");
+  var accountIdEl = document.getElementById("clefAccountId");
+  var apiKeyEl = document.getElementById("providerApiKey");
   var toggleKeyBtn = document.getElementById("toggleKeyBtn");
   var localContentEl = document.getElementById("localContent");
   var classifyConfig = document.getElementById("classifyConfig");
@@ -36,6 +39,10 @@
   var domainFilter = "all";
   var flashDomains = [];
   var savedSnapshot = null;
+  var activeProvider = "jev";
+  var providerConfigs = {};
+  var providerApiKeys = {};
+  var connectionRevision = 0;
 
   var isMac = /Mac|iPhone|iPad/.test(navigator.platform || "");
   saveBtn.title = isMac ? "\u2318S" : "Ctrl+S";
@@ -43,8 +50,14 @@
   setDomainFilter("all");
 
   ALETHEIA.storage.get().then(function (s) {
-    jevBaseUrlEl.value = s.jevBaseUrl || ALETHEIA.DEFAULTS.jevBaseUrl;
-    jevApiKeyEl.value = s.jevApiKey || "";
+    ALETHEIA.providers.list().forEach(function (id) {
+      var connection = ALETHEIA.providers.config(s, id);
+      providerConfigs[id] = { baseUrl: connection.baseUrl, model: connection.model, accountId: connection.accountId };
+      providerApiKeys[id] = connection.apiKey;
+    });
+    activeProvider = ALETHEIA.providers.list().indexOf(s.modelProvider) === -1 ? "jev" : s.modelProvider;
+    providerEl.value = activeProvider;
+    renderProvider();
     localContentEl.checked = !!s.localContent;
     showBadgePercentEl.checked = !!s.showBadgePercent;
     minTextLengthEl.value = s.minTextLength;
@@ -59,6 +72,61 @@
 
   // Unsaved-change tracking
 
+  function collectProvider() {
+    var info = ALETHEIA.providers.info(activeProvider);
+    providerConfigs[activeProvider] = {
+      baseUrl: activeProvider === "clef" ? "" : baseUrlEl.value.trim() || info.baseUrl,
+      model: modelEl.value.trim() || info.model,
+      accountId: activeProvider === "clef" ? accountIdEl.value.trim() : ""
+    };
+    providerApiKeys[activeProvider] = apiKeyEl.value.trim();
+  }
+
+  function connectionSettings() {
+    collectProvider();
+    return { modelProvider: activeProvider, providerConfigs: providerConfigs, providerApiKeys: providerApiKeys };
+  }
+
+  function renderProvider() {
+    var info = ALETHEIA.providers.info(activeProvider);
+    var profile = providerConfigs[activeProvider] || info;
+    baseUrlEl.value = profile.baseUrl || info.baseUrl || "";
+    baseUrlEl.placeholder = info.baseUrl || "";
+    modelEl.value = profile.model || info.model;
+    accountIdEl.value = profile.accountId || "";
+    apiKeyEl.value = providerApiKeys[activeProvider] || "";
+    apiKeyEl.type = "password";
+    toggleKeyBtn.setAttribute("aria-pressed", "false");
+    toggleKeyBtn.title = ALETHEIA.t("showKey");
+    toggleKeyBtn.setAttribute("aria-label", ALETHEIA.t("showKey"));
+    document.getElementById("baseUrlField").hidden = activeProvider === "clef";
+    document.getElementById("accountIdField").hidden = activeProvider !== "clef";
+    document.getElementById("apiKeyLabel").textContent = ALETHEIA.t(activeProvider === "clef" ? "cloudflareApiToken" : "providerApiKey");
+    document.getElementById("providerHint").textContent = ALETHEIA.t(activeProvider + "ProviderHint");
+    var suggestions = document.getElementById("modelSuggestions");
+    suggestions.innerHTML = "";
+    info.models.forEach(function (model) {
+      var option = document.createElement("option");
+      option.value = model;
+      suggestions.appendChild(option);
+    });
+    invalidateConnection();
+  }
+
+  function invalidateConnection() {
+    connectionRevision++;
+    connectionBadge.hidden = true;
+    testStatus.className = "test-status";
+    [baseUrlEl, accountIdEl, modelEl, apiKeyEl].forEach(function (el) { el.classList.remove("invalid"); });
+  }
+
+  providerEl.addEventListener("change", function () {
+    collectProvider();
+    activeProvider = providerEl.value;
+    renderProvider();
+    updateDirty();
+  });
+
   function snapshot() {
     var rows = categoryList.querySelectorAll(".category-row");
     var cats = [];
@@ -69,8 +137,7 @@
       ]);
     }
     return JSON.stringify([
-      jevBaseUrlEl.value.trim(),
-      jevApiKeyEl.value.trim(),
+      connectionSettings(),
       localContentEl.checked,
       showBadgePercentEl.checked,
       minTextLengthEl.value,
@@ -95,10 +162,7 @@
   }
 
   document.addEventListener("input", function (e) {
-    if (e.target === jevBaseUrlEl) jevBaseUrlEl.classList.remove("invalid");
-    if (e.target === jevBaseUrlEl || e.target === jevApiKeyEl) {
-      connectionBadge.hidden = true;
-    }
+    if ([baseUrlEl, accountIdEl, modelEl, apiKeyEl].indexOf(e.target) !== -1) invalidateConnection();
     updateDirty();
   });
   document.addEventListener("change", updateDirty);
@@ -119,8 +183,8 @@
   // API key visibility
 
   toggleKeyBtn.addEventListener("click", function () {
-    var show = jevApiKeyEl.type === "password";
-    jevApiKeyEl.type = show ? "text" : "password";
+    var show = apiKeyEl.type === "password";
+    apiKeyEl.type = show ? "text" : "password";
     toggleKeyBtn.setAttribute("aria-pressed", show ? "true" : "false");
     var title = ALETHEIA.t(show ? "hideKey" : "showKey");
     toggleKeyBtn.title = title;
@@ -253,13 +317,13 @@
   // Connection test
 
   testBtn.addEventListener("click", function () {
-    var baseUrl = jevBaseUrlEl.value.trim() || ALETHEIA.DEFAULTS.jevBaseUrl;
-    var urlError = validateUrl(baseUrl);
-    if (urlError) {
-      jevBaseUrlEl.classList.add("invalid");
-      showTestStatus(urlError, false);
+    var settings = connectionSettings();
+    var error = connectionError(settings);
+    if (error) {
+      showTestStatus(error, false);
       return;
     }
+    var revision = connectionRevision;
 
     testBtn.disabled = true;
     testBtn.classList.add("loading");
@@ -267,10 +331,10 @@
     testStatus.className = "test-status";
     connectionBadge.hidden = true;
 
-    ALETHEIA.jev.test(baseUrl, jevApiKeyEl.value.trim()).then(function () {
-      showTestStatus(ALETHEIA.t("connectedOk"), true);
+    ALETHEIA.providers.test(settings).then(function () {
+      if (revision === connectionRevision) showTestStatus(ALETHEIA.t("connectedOk"), true);
     }).catch(function (err) {
-      showTestStatus(ALETHEIA.t("connectionFailed") + err.message, false);
+      if (revision === connectionRevision) showTestStatus(ALETHEIA.t("connectionFailed") + err.message, false);
     }).finally(function () {
       testBtn.disabled = false;
       testBtn.classList.remove("loading");
@@ -278,15 +342,11 @@
     });
   });
 
-  function validateUrl(value) {
-    if (!value) return ALETHEIA.t("invalidUrl");
+  function connectionError(settings, allowMissingKey) {
     try {
-      var parsed = new URL(value);
-      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-        return ALETHEIA.t("urlMustHttp");
-      }
+      ALETHEIA.providers.validate(settings, { allowMissingKey: !!allowMissingKey });
     } catch (e) {
-      return ALETHEIA.t("invalidUrl");
+      return e.message;
     }
     return "";
   }
@@ -501,12 +561,11 @@
   }
 
   function save() {
-    var baseUrl = jevBaseUrlEl.value.trim() || ALETHEIA.DEFAULTS.jevBaseUrl;
-    var urlError = validateUrl(baseUrl);
-    if (urlError) {
-      jevBaseUrlEl.classList.add("invalid");
-      jevBaseUrlEl.focus();
-      toast(urlError, true);
+    var settings = connectionSettings();
+    var error = connectionError(settings, true);
+    // An empty key can be saved so credentials can be removed or configured later.
+    if (error) {
+      toast(error, true);
       return;
     }
 
@@ -520,17 +579,14 @@
     minLength = Math.min(5000, Math.max(50, minLength));
 
     saveBtn.disabled = true;
-    ALETHEIA.storage.set({
-      jevBaseUrl: baseUrl,
-      jevApiKey: jevApiKeyEl.value.trim(),
+    ALETHEIA.storage.set(Object.assign({}, settings, {
       localContent: localContentEl.checked,
       contentCategories: collected || savedCategories,
       showBadgePercent: showBadgePercentEl.checked,
       minTextLength: minLength,
       blacklist: domains.blacklist.slice(),
       whitelist: domains.whitelist.slice()
-    }).then(function () {
-      jevBaseUrlEl.value = baseUrl;
+    })).then(function () {
       minTextLengthEl.value = minLength;
       if (collected) {
         categories = collected;
@@ -551,14 +607,16 @@
     if (!confirm(ALETHEIA.t("confirmReset"))) return;
 
     var d = ALETHEIA.DEFAULTS;
-    jevBaseUrlEl.value = d.jevBaseUrl;
-    jevApiKeyEl.value = "";
+    activeProvider = d.modelProvider;
+    providerEl.value = activeProvider;
+    providerConfigs = {};
+    providerApiKeys = {};
+    renderProvider();
     localContentEl.checked = d.localContent;
     showBadgePercentEl.checked = d.showBadgePercent;
     minTextLengthEl.value = d.minTextLength;
     testStatus.className = "test-status";
     connectionBadge.hidden = true;
-    jevBaseUrlEl.classList.remove("invalid");
 
     domains = normalizeDomains(d);
     setDomainFilter("all");
@@ -571,6 +629,9 @@
     ALETHEIA.storage.set({
       jevBaseUrl: d.jevBaseUrl,
       jevApiKey: "",
+      modelProvider: d.modelProvider,
+      providerConfigs: {},
+      providerApiKeys: {},
       localContent: d.localContent,
       contentCategories: categories,
       showBadgePercent: d.showBadgePercent,

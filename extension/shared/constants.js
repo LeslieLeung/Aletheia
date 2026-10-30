@@ -2,6 +2,8 @@
 var ALETHEIA = globalThis.ALETHEIA || {};
 
 ALETHEIA.DEFAULTS = Object.freeze({
+  modelProvider: "jev",
+  providerConfigs: {},
   jevBaseUrl: "https://api.typesafe.ai",
   localContent: false,
   contentCategories: [],

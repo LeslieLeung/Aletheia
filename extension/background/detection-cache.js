@@ -66,13 +66,11 @@ ALETHEIA.detection = (function () {
   }
 
   async function keyFor(settings, message, questions) {
-    // Use the complete extracted body, including text beyond Jev's budget.
+    // Use the complete extracted body, including text beyond the request budget.
     // Titles and URLs deliberately do not partition identical article bodies.
     var identity = JSON.stringify({
       text: String(message.text || ""),
-      baseUrl: String(settings.jevBaseUrl || "").trim().replace(/\/+$/, ""),
-      apiKey: String(settings.jevApiKey || "").trim(),
-      model: "jev-latest",
+      connection: ALETHEIA.providers.identity(settings),
       questions: questions
     });
     var digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(identity));
@@ -100,7 +98,7 @@ ALETHEIA.detection = (function () {
     }
 
     var request = Promise.resolve().then(function () {
-      return ALETHEIA.jev.detect(settings, state, questions);
+      return ALETHEIA.providers.detect(settings, state, questions);
     }).then(async function (response) {
       if (response && response.success === true) {
         results.delete(key);

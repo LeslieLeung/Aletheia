@@ -36,7 +36,7 @@
       "shared/storage.js",
       "shared/i18n.js",
       "shared/questions.js",
-      "shared/jev.js",
+      "shared/providers.js",
       "background/detection-cache.js",
       "background/service-worker.js"
     ],
